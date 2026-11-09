@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>TalentMatch — Présentation du projet</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 18mm 16mm; }
+  :root {
+    --ink: #1c2331; --muted: #5b6475; --line: #dfe3ea; --soft: #f4f6fa;
+    --accent: #2c4fd6; --accent-soft: #e9eefc; --ok: #1f8a5b; --warn: #b4531a;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: Inter, "DejaVu Sans", sans-serif; color: var(--ink); font-size: 10.2pt; line-height: 1.5; margin: 0; background: #fff; }
+  h1 { font-size: 30pt; margin: 0; letter-spacing: -0.5px; }
+  h2 { font-size: 14.5pt; color: var(--accent); margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent-soft); break-after: avoid; }
+  h2 .n { color: var(--muted); font-weight: 500; margin-right: 6px; }
+  h3 { font-size: 11pt; margin: 12px 0 4px; break-after: avoid; }
+  p { margin: 4px 0 8px; }
+  ul { margin: 4px 0 8px; padding-left: 18px; }
+  li { margin: 2px 0; }
+  strong { font-weight: 600; }
+  .muted { color: var(--muted); }
+  .section { break-inside: avoid-page; }
+
+  /* Cover */
+  .cover { padding: 8px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .tag { display: inline-block; font-size: 8.5pt; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 3px 9px; border-radius: 20px; }
+  .subtitle { font-size: 13pt; color: var(--muted); margin: 6px 0 14px; }
+  .pitch { font-size: 11pt; background: var(--soft); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; }
+
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 4px; }
+  .fact { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .fact b { display: block; font-size: 13pt; color: var(--accent); }
+  .fact span { font-size: 8.6pt; color: var(--muted); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; break-inside: avoid; }
+  .card h3 { margin-top: 0; color: var(--ink); }
+  .card p, .card ul { font-size: 9.5pt; margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.3pt; margin: 6px 0 10px; break-inside: avoid; }
+  th { text-align: left; background: var(--soft); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .yes { color: var(--ok); font-weight: 600; }
+  .no { color: var(--warn); font-weight: 600; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 6px 0 10px; font-size: 8.8pt; }
+  .flow span.step { background: var(--accent-soft); color: var(--accent); font-weight: 600; padding: 4px 8px; border-radius: 5px; }
+  .flow span.arr { color: var(--muted); }
+
+  .bars { margin: 6px 0 4px; }
+  .bar { display: grid; grid-template-columns: 170px 1fr 38px; align-items: center; gap: 8px; font-size: 9.2pt; margin: 3px 0; }
+  .bar .track { background: var(--soft); border-radius: 4px; height: 10px; }
+  .bar .fill { background: var(--accent); height: 10px; border-radius: 4px; }
+  .bar .v { text-align: right; font-weight: 600; }
+
+  .callout { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; margin: 8px 0; break-inside: avoid; }
+  .footer-note { margin-top: 22px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="tag">Projet de Fin d'Études · Ingénierie IA</span>
+  <h1>TalentMatch</h1>
+  <div class="subtitle">Plateforme de recrutement avec ATS intelligent et matching bidirectionnel</div>
+  <div class="pitch">
+    Une plateforme d'emploi publique où les entreprises publient une offre en quelques minutes,
+    et où une IA <strong>analyse, classe et explique</strong> chaque candidature, tandis que
+    <strong>l'humain garde toujours la décision finale</strong>.
+  </div>
+  <div class="facts">
+    <div class="fact"><b>16 semaines</b><span>8 sprints de 2 semaines</span></div>
+    <div class="fact"><b>3 ingénieurs IA</b><span>+ encadrant académique et référent RH</span></div>
+    <div class="fact"><b>Release 1.0</b><span>une seule mise en production, semaine 14</span></div>
+    <div class="fact"><b>≈ 60 €/mois</b><span>coût d'exploitation, IA comprise</span></div>
+  </div>
+</div>
+
+<div class="section">
+<h2><span class="n">01</span>Le problème</h2>
+<p>Sur les job boards, postuler ne coûte presque rien : une offre reçoit facilement des dizaines, voire des centaines
+de candidatures, dont beaucoup ne correspondent pas au poste. Les PME n'ont ni ATS ni recruteur dédié ; le tri est
+<strong>manuel, lent et inégal</strong>. Les ATS du marché (Greenhouse, Lever, Workable) sont pensés pour de grandes
+équipes RH, coûteux, et leur IA explique peu ses choix.</p>
+<p><strong>Question centrale :</strong> comment réduire de façon mesurable le temps de présélection, tout en produisant
+un classement <em>explicable, contestable, équitable</em> et conforme au RGPD et à l'AI Act ?</p>
+<div class="grid3">
+  <div class="card"><h3>CV hétérogènes</h3><p>PDF, scans, photos, DOCX ; mises en page variées ; trois langues (FR / EN / AR).</p></div>
+  <div class="card"><h3>Vocabulaire variable</h3><p>« ML engineer » et « ingénieur apprentissage automatique » désignent la même compétence ; les mots-clés échouent.</p></div>
+  <div class="card"><h3>Confiance et conformité</h3><p>Un score sans justification est inutilisable, et le recrutement est un domaine IA « à haut risque ».</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2><span class="n">02</span>La solution</h2>
+<div class="grid2">
+  <div class="card"><h3>📝 Création d'offre multicanale</h3>
+    <p>L'entreprise crée son offre en discutant avec un chatbot, en dictant, en collant un texte, en important un fichier
+    ou via un formulaire. Tous les canaux produisent la même offre structurée, avec contrôle qualité et détection des biais de l'annonce.</p></div>
+  <div class="card"><h3>🎯 ATS intelligent</h3>
+    <p>Chaque CV est lu (OCR si besoin), structuré et noté. Le recruteur obtient une <strong>shortlist de taille N qu'il choisit</strong>
+    (10 par défaut, ou par seuil de score), avec une explication pour <strong>chaque</strong> candidat, retenu ou non.</p></div>
+  <div class="card"><h3>🔁 Matching bidirectionnel</h3>
+    <p>Les candidats inscrits reçoivent les offres qui leur correspondent et postulent en un clic ; les entreprises
+    se voient suggérer des talents pertinents (avec l'accord explicite du candidat).</p></div>
+  <div class="card"><h3>🌐 Accessible à tous</h3>
+    <p>Page publique pour chaque offre (indexée par Google), candidature sans compte depuis un mobile,
+    suivi par lien sécurisé. Interface en français, anglais et arabe.</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2><span class="n">03</span>Principe clé : l'IA trie, l'humain décide</h2>
+<p>Le tri est automatisé de bout en bout ; la décision ne l'est pas. Ce choix découle de l'article 22 du RGPD et de la
+classification « haut risque » du recrutement par l'AI Act. Il garde le gain de temps tout en le rendant légal et défendable.</p>
+<table>
+  <tr><th style="width:42%">Étape</th><th style="width:18%">Automatisée ?</th><th>Pourquoi</th></tr>
+  <tr><td>Lecture, extraction et normalisation des CV</td><td class="yes">Oui, 100 %</td><td>Aucun effet sur le candidat.</td></tr>
+  <tr><td>Score, classement, shortlist, explications</td><td class="yes">Oui, 100 %</td><td>Aide à la décision : personne n'a besoin de lire tous les CV.</td></tr>
+  <tr><td>Refus d'un candidat</td><td class="no">Non</td><td>Action humaine tracée (individuelle ou groupée, après lecture des motifs).</td></tr>
+  <tr><td>Entretien, embauche</td><td class="no">Non</td><td>Décision et responsabilité de l'employeur.</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2><span class="n">04</span>Pour qui ?</h2>
+<div class="grid2">
+  <div class="card"><h3>Samira · gérante de PME</h3><p>Recrute seule, depuis son téléphone. Reçoit 80 candidatures et veut 5 profils fiables, avec la raison du choix.</p></div>
+  <div class="card"><h3>Karim · chargé de recrutement</h3><p>Gère 15 offres et veut du contrôle : ajuster les critères, comparer, défendre ses choix.</p></div>
+  <div class="card"><h3>Lina · jeune diplômée</h3><p>Veut voir les offres qui lui correspondent, postuler vite et savoir où en est sa candidature.</p></div>
+  <div class="card"><h3>Youssef · technicien</h3><p>Postule sans compte depuis son mobile, avec la photo d'un CV papier en arabe et en français.</p></div>
+</div>
+<p class="muted" style="margin-top:8px">Une administratrice plateforme assure la modération, les demandes RGPD et la supervision de l'IA.</p>
+</div>
+
+<div class="section">
+<h2><span class="n">05</span>Comment fonctionne l'IA</h2>
+<p>Le modèle de langage <strong>extrait des faits et cite ses preuves</strong> ; le classement est calculé par une
+<strong>formule transparente et déterministe</strong>. Résultat : un score reproductible, explicable et résistant aux manipulations.</p>
+<div class="flow">
+  <span class="step">CV</span><span class="arr">→</span>
+  <span class="step">Antivirus</span><span class="arr">→</span>
+  <span class="step">Lecture / OCR</span><span class="arr">→</span>
+  <span class="step">Anti-injection</span><span class="arr">→</span>
+  <span class="step">Masquage données perso.</span><span class="arr">→</span>
+  <span class="step">Extraction du profil</span><span class="arr">→</span>
+  <span class="step">Normalisation ESCO</span><span class="arr">→</span>
+  <span class="step">Score</span><span class="arr">→</span>
+  <span class="step">Vérification des preuves</span><span class="arr">→</span>
+  <span class="step">Shortlist + explications</span>
+</div>
+<div class="grid2">
+  <div>
+    <h3>Score sur 100 : 7 critères pondérés</h3>
+    <div class="bars">
+      <div class="bar"><span>Compétences</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">30 %</span></div>
+      <div class="bar"><span>Exigences du poste</span><div class="track"><div class="fill" style="width:83%"></div></div><span class="v">25 %</span></div>
+      <div class="bar"><span>Expérience</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="v">15 %</span></div>
+      <div class="bar"><span>Proximité sémantique</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="v">15 %</span></div>
+      <div class="bar"><span>Formation</span><div class="track"><div class="fill" style="width:17%"></div></div><span class="v">5 %</span></div>
+      <div class="bar"><span>Langues</span><div class="track"><div class="fill" style="width:17%"></div></div><span class="v">5 %</span></div>
+      <div class="bar"><span>Localisation</span><div class="track"><div class="fill" style="width:17%"></div></div><span class="v">5 %</span></div>
+    </div>
+    <p class="muted" style="font-size:8.8pt">Pondérations ajustables par le recruteur, puis calibrées sur des données annotées par des humains.</p>
+  </div>
+  <div>
+    <h3>Garde-fous</h3>
+    <ul style="font-size:9.4pt">
+      <li><strong>Preuves vérifiées :</strong> chaque critère cite un extrait réel du CV ; sinon, il est jugé « non démontré ».</li>
+      <li><strong>Équité :</strong> nom et attributs sensibles retirés avant l'évaluation ; surqualification et trous de parcours non pénalisés.</li>
+      <li><strong>Sécurité :</strong> détection du texte caché et des tentatives d'injection dans les CV.</li>
+      <li><strong>Reproductibilité :</strong> même CV, même offre → même score (à 0,01 près).</li>
+      <li><strong>Cas douteux :</strong> un CV mal lu va dans « À vérifier » plutôt que d'être déclassé.</li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2><span class="n">06</span>Ce qui nous différencie</h2>
+<p>Aucun acteur étudié (Indeed, LinkedIn, Welcome to the Jungle, Greenhouse, Lever, Workable, Teamtailor) ne combine
+un job board public, un ATS pour PME, une shortlist paramétrable et une explication pour chaque candidat non retenu.</p>
+<ul>
+  <li><strong>Explication pour tous</strong>, preuves du CV à l'appui, y compris pour les candidats écartés.</li>
+  <li><strong>Shortlist pilotée par le recruteur</strong> : top-N libre, seuil de score, ou les deux.</li>
+  <li><strong>Saisie d'offre multicanale</strong> : chat, voix, texte, fichier, formulaire.</li>
+  <li><strong>Multilingue FR / EN / AR de bout en bout</strong>, y compris pour les CV scannés.</li>
+  <li><strong>Conformité par conception</strong> : humain décideur, journal d'audit, tests de biais publiés.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2><span class="n">07</span>Périmètre fonctionnel</h2>
+<p>58 fonctionnalités, toutes visant la Release 1.0, priorisées selon la méthode MoSCoW :</p>
+<table>
+  <tr><th style="width:18%">Priorité</th><th style="width:10%">Nombre</th><th>Exemples</th></tr>
+  <tr><td><strong>Must</strong> (indispensable)</td><td>36</td><td>Comptes et rôles, chatbot d'offre, candidature sans compte, parsing + OCR, score et shortlist, explications, recommandations, tableau de bord, RGPD, journal d'audit, sauvegardes, CI/CD</td></tr>
+  <tr><td><strong>Should</strong> (important)</td><td>15</td><td>Interface FR/EN/AR, dictée vocale, pondérations ajustables, vue anonymisée, contrefactuels, suggestion de talents, alertes emploi</td></tr>
+  <tr><td><strong>Could</strong> (bonus)</td><td>7</td><td>Comparaison de candidats, guide d'entretien, conseils CV, assistant candidat, export PDF</td></tr>
+</table>
+<p><strong>Volontairement exclus :</strong> refus automatique, analyse vidéo ou des émotions, scraping LinkedIn, application mobile native,
+benchmark salarial, tests de personnalité, facturation, fine-tuning de LLM.</p>
+</div>
+
+<div class="section">
+<h2><span class="n">08</span>Architecture et technologies</h2>
+<p>Une architecture <strong>simple et robuste</strong> : un monolithe modulaire, un worker pour les traitements IA, une seule base de données,
+le tout hébergé dans l'Union européenne.</p>
+<table>
+  <tr><th style="width:22%">Couche</th><th>Choix</th></tr>
+  <tr><td>Frontend</td><td>Next.js 15, TypeScript, Tailwind CSS (rendu serveur pour le référencement des offres)</td></tr>
+  <tr><td>Backend</td><td>Python 3.12, FastAPI, worker Celery + Redis</td></tr>
+  <tr><td>Données</td><td>PostgreSQL 16 + pgvector (recherche vectorielle dans la même base)</td></tr>
+  <tr><td>IA</td><td>Mistral Small (extraction, chatbot), Mistral OCR, bge-m3 (embeddings multilingues exécutés localement), taxonomie ESCO</td></tr>
+  <tr><td>Hébergement</td><td>VM Hetzner (UE), Docker Compose, HTTPS automatique, sauvegardes hors site</td></tr>
+  <tr><td>Exploitation</td><td>GitHub Actions, Sentry, Grafana Cloud, Langfuse (suivi des appels IA)</td></tr>
+</table>
+<p class="muted">Capacité visée et vérifiée par test de charge : 500 offres actives, 10 000 profils, 20 000 candidatures.
+Un CV est scoré en moins de 90 secondes.</p>
+</div>
+
+<div class="section">
+<h2><span class="n">09</span>Sécurité, RGPD et AI Act</h2>
+<div class="grid3">
+  <div class="card"><h3>Prêt pour la production</h3><p>16 critères vérifiables : HTTPS, contrôle d'accès, secrets protégés, sauvegardes et restauration testées, monitoring, test de charge, runbook de 10 incidents.</p></div>
+  <div class="card"><h3>RGPD</h3><p>Consentements tracés, droit à une revue humaine, effacement réel sous 30 jours, données minimisées (ni photo, ni âge, ni nationalité), analyse d'impact (AIPD).</p></div>
+  <div class="card"><h3>AI Act</h3><p>Exigences « haut risque » appliquées dès maintenant : gestion des risques, journalisation, transparence, contrôle humain, robustesse, fiche modèle publique.</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2><span class="n">10</span>Comment nous mesurons le succès</h2>
+<p>La performance de l'IA est mesurée uniquement sur des données <strong>annotées par des humains</strong>
+(10 offres réelles × 50 CV, dont un annotateur recruteur professionnel). Les données synthétiques servent aux tests de non-régression, de charge et de biais.</p>
+<table>
+  <tr><th>Indicateur</th><th style="width:34%">Cible</th></tr>
+  <tr><td>Qualité d'extraction des compétences (F1)</td><td>≥ 0,80</td></tr>
+  <tr><td>Qualité du classement (nDCG@10)</td><td>≥ 0,75 et meilleur que la méthode classique par mots-clés (BM25)</td></tr>
+  <tr><td>Pertinence de la shortlist (7 bons profils sur 10)</td><td>Précision ≥ 0,70</td></tr>
+  <tr><td>Équité : écart de score si seuls le nom, le genre ou l'origine changent</td><td>&lt; 0,01 en moyenne</td></tr>
+  <tr><td>Délai entre dépôt du CV et score disponible</td><td>≤ 90 s</td></tr>
+  <tr><td>Temps de création d'une offre par chatbot</td><td>≤ 5 min (contre 20 à 30 min à la main)</td></tr>
+  <tr><td>Disponibilité de la plateforme</td><td>≥ 99,5 %</td></tr>
+  <tr><td>Satisfaction utilisateurs (score SUS)</td><td>≥ 70</td></tr>
+  <tr><td>Usage réel au lancement</td><td>10 entreprises, 30 offres, 20 à 30 candidatures réelles</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2><span class="n">11</span>Planning</h2>
+<p>Un squelette fonctionnel est mis en production dès le premier sprint, puis enrichi jusqu'à l'ouverture publique en semaine 14.</p>
+<table>
+  <tr><th style="width:13%">Sprint</th><th style="width:13%">Semaines</th><th>Contenu</th><th style="width:28%">Jalon</th></tr>
+  <tr><td>S1</td><td>1–2</td><td>Cadrage, maquettes, socle technique</td><td>Squelette en ligne (HTTPS)</td></tr>
+  <tr><td>S2</td><td>3–4</td><td>Offres, page publique, candidature sans compte</td><td>Première offre publiée</td></tr>
+  <tr><td>S3</td><td>5–6</td><td>Lecture des CV, OCR, extraction, annotation</td><td>Jeu de référence figé</td></tr>
+  <tr><td>S4</td><td>7–8</td><td>Score, shortlist, explications, calibrage</td><td>Validation des choix IA</td></tr>
+  <tr><td>S5</td><td>9–10</td><td>Chatbot, espace candidat, recommandations</td><td>Parcours candidat complet</td></tr>
+  <tr><td>S6</td><td>11–12</td><td>Tableaux de bord, administration, RGPD, sécurité</td><td>100 % des « Must » terminés</td></tr>
+  <tr><td>S7</td><td>13–14</td><td>Tests de charge et de biais, recette, onboarding</td><td><strong>Ouverture publique R1.0</strong></td></tr>
+  <tr><td>S8</td><td>15–16</td><td>Stabilisation, rapport, soutenance</td><td>Soutenance</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2><span class="n">12</span>Équipe, budget et risques</h2>
+<div class="grid2">
+  <div>
+    <h3>Équipe</h3>
+    <ul>
+      <li><strong>Lead IA</strong> : parsing, extraction, score, explications, évaluation.</li>
+      <li><strong>Lead backend & DevOps</strong> : architecture, API, sécurité, déploiement.</li>
+      <li><strong>Lead frontend & produit</strong> : interface, accessibilité, multilingue, documentation.</li>
+    </ul>
+    <p class="muted" style="font-size:9pt">Charge « Must » : 116 jours-personne sur 190 disponibles (61 %), avec une réserve pour les imprévus.</p>
+    <h3>Budget</h3>
+    <ul>
+      <li>Exploitation : <strong>≈ 60 € / mois</strong> (serveurs, stockage, IA).</li>
+      <li>Coût IA par candidature : <strong>≈ 0,002 €</strong>.</li>
+      <li>Coût total du projet sur 4 mois : <strong>≈ 330 €</strong>, réserve incluse.</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Principaux risques et parades</h3>
+    <table>
+      <tr><th>Risque</th><th>Parade</th></tr>
+      <tr><td>Retard sur l'essentiel</td><td>Ligne de coupure en semaine 12, priorités MoSCoW</td></tr>
+      <tr><td>Peu d'entreprises ou de candidats réels</td><td>Démarchage dès S1 via l'école et ses partenaires</td></tr>
+      <tr><td>Extraction moins bonne en arabe</td><td>Métriques par langue, revue humaine des cas difficiles</td></tr>
+      <tr><td>Confiance aveugle dans l'IA</td><td>Motifs à lire avant tout refus groupé, mesure d'usage</td></tr>
+      <tr><td>Évolution des prix ou modèles IA</td><td>Fournisseur interchangeable, plafonds de coût</td></tr>
+    </table>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2><span class="n">13</span>Livrables</h2>
+<div class="grid2">
+  <ul>
+    <li>Plateforme Release 1.0 en ligne sur une URL publique</li>
+    <li>Code source documenté et maquettes Figma (32 écrans)</li>
+    <li>Rapport d'évaluation IA et fiche modèle publique</li>
+    <li>Rapport de test de charge</li>
+  </ul>
+  <ul>
+    <li>Dossier de conformité (AIPD, registre, notices, AI Act)</li>
+    <li>Runbook et documentation d'exploitation</li>
+    <li>Guides recruteur, candidat et administrateur</li>
+    <li>Rapport de PFE, soutenance et vidéo de démonstration</li>
+  </ul>
+</div>
+<div class="callout">
+  <strong>En résumé :</strong> TalentMatch fait gagner du temps aux recruteurs sans leur retirer la décision,
+  donne à chaque candidat une réponse argumentée, et le prouve par une évaluation rigoureuse, sur une plateforme réellement en production.
+</div>
+</div>
+
+<div class="footer-note">Synthèse du Cahier des Charges TalentMatch v1.3 (approuvé). Le document complet détaille les spécifications, formules, tests et hypothèses.</div>
+
+</body>
+</html>
