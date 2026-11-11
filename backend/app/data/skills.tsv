@@ -1,0 +1,138 @@
+# id|broader|label_en|label_fr|aliases (comma separated, any language)
+programming||Programming|Programmation|software development,développement logiciel,برمجة,تطوير البرمجيات
+python|programming|Python|Python|python3,بايثون
+java|programming|Java|Java|jee,j2ee,جافا
+javascript|programming|JavaScript|JavaScript|js,ecmascript,es6,جافاسكريبت
+typescript|javascript|TypeScript|TypeScript|ts
+csharp|programming|C#|C#|c sharp,.net,dotnet,asp.net
+cpp|programming|C++|C++|cplusplus
+c_lang|programming|C language|Langage C|langage c,embedded c
+php|programming|PHP|PHP|laravel,symfony
+go|programming|Go|Go|golang
+rust|programming|Rust|Rust|
+ruby|programming|Ruby|Ruby|ruby on rails,rails
+kotlin|programming|Kotlin|Kotlin|
+swift|programming|Swift|Swift|
+scala|programming|Scala|Scala|
+r_lang|programming|R|R|rstudio,langage r
+matlab|programming|MATLAB|MATLAB|simulink
+web_dev|programming|Web development|Développement web|développeur web,web developer,تطوير الويب
+frontend|web_dev|Front-end development|Développement front-end|frontend,front end,intégration web
+backend|web_dev|Back-end development|Développement back-end|backend,back end
+fullstack|web_dev|Full-stack development|Développement full-stack|fullstack,full stack
+html_css|frontend|HTML/CSS|HTML/CSS|html,css,html5,css3,sass,tailwind,bootstrap
+react|frontend|React|React|reactjs,react.js,redux
+nextjs|react|Next.js|Next.js|nextjs,next js
+angular|frontend|Angular|Angular|angularjs
+vue|frontend|Vue.js|Vue.js|vuejs,vue,nuxt
+nodejs|backend|Node.js|Node.js|node,nodejs,express,expressjs,nestjs
+django|backend|Django|Django|django rest framework,drf
+fastapi|backend|FastAPI|FastAPI|
+flask|backend|Flask|Flask|
+spring|backend|Spring Boot|Spring Boot|spring,spring framework,springboot
+rest_api|backend|REST APIs|API REST|rest,restful,api rest,web services,graphql,api design
+mobile_dev|programming|Mobile development|Développement mobile|android,ios,développeur mobile,تطوير تطبيقات الجوال
+flutter|mobile_dev|Flutter|Flutter|dart
+react_native|mobile_dev|React Native|React Native|
+databases||Databases|Bases de données|database,base de données,sgbd,dbms,قواعد البيانات
+sql|databases|SQL|SQL|t-sql,pl/sql,plsql,requêtes sql
+postgresql|sql|PostgreSQL|PostgreSQL|postgres,postgis
+mysql|sql|MySQL|MySQL|mariadb
+oracle_db|sql|Oracle Database|Oracle Database|oracle
+sqlserver|sql|SQL Server|SQL Server|mssql,ms sql
+mongodb|databases|MongoDB|MongoDB|nosql,mongo
+redis|databases|Redis|Redis|
+elasticsearch|databases|Elasticsearch|Elasticsearch|elk,opensearch,kibana
+data_science||Data science|Science des données|data scientist,science de données,علم البيانات
+machine_learning|data_science|Machine learning|Apprentissage automatique|ml,machine learning,apprentissage machine,ml engineer,ingénieur apprentissage automatique,تعلم الآلة,تعلم آلي,مهندس تعلم آلي
+deep_learning|machine_learning|Deep learning|Apprentissage profond|réseaux de neurones,neural networks,التعلم العميق
+nlp|machine_learning|Natural language processing|Traitement du langage naturel|nlp,tal,traitement automatique du langage,llm,large language models,transformers,معالجة اللغة الطبيعية
+computer_vision|machine_learning|Computer vision|Vision par ordinateur|opencv,image processing,traitement d'image,yolo
+pytorch|deep_learning|PyTorch|PyTorch|torch
+tensorflow|deep_learning|TensorFlow|TensorFlow|keras
+scikit_learn|machine_learning|scikit-learn|scikit-learn|sklearn,scikit learn,xgboost,lightgbm
+mlops|machine_learning|MLOps|MLOps|mlflow,model deployment,kubeflow
+data_analysis|data_science|Data analysis|Analyse de données|data analyst,analyse des données,analytics,تحليل البيانات
+pandas|data_analysis|pandas|pandas|numpy
+statistics|data_science|Statistics|Statistiques|statistical analysis,analyse statistique,probabilités,إحصاء
+data_engineering|data_science|Data engineering|Ingénierie des données|data engineer,etl,elt,data pipeline,pipelines de données,airflow,dbt
+spark|data_engineering|Apache Spark|Apache Spark|spark,pyspark,hadoop,big data
+kafka|data_engineering|Apache Kafka|Apache Kafka|kafka
+bi|data_analysis|Business intelligence|Informatique décisionnelle|bi,reporting,tableaux de bord,dashboards,dashboarding
+power_bi|bi|Power BI|Power BI|powerbi,dax
+tableau|bi|Tableau|Tableau|tableau software
+excel|data_analysis|Microsoft Excel|Microsoft Excel|excel,vba,tableaux croisés dynamiques,pivot tables,إكسل
+devops||DevOps|DevOps|sre,site reliability,ingénieur devops
+docker|devops|Docker|Docker|containers,conteneurs,docker compose
+kubernetes|devops|Kubernetes|Kubernetes|k8s,helm,openshift
+ci_cd|devops|CI/CD|CI/CD|continuous integration,intégration continue,gitlab ci,github actions,jenkins,déploiement continu
+terraform|devops|Terraform|Terraform|infrastructure as code,iac,ansible
+linux|devops|Linux|Linux|unix,bash,shell scripting,ubuntu,debian,red hat
+git|programming|Git|Git|github,gitlab,bitbucket,version control,gestion de versions
+cloud||Cloud computing|Cloud computing|cloud,informatique en nuage,الحوسبة السحابية
+aws|cloud|Amazon Web Services|Amazon Web Services|aws,ec2,s3,lambda
+azure|cloud|Microsoft Azure|Microsoft Azure|azure
+gcp|cloud|Google Cloud Platform|Google Cloud Platform|gcp,google cloud,bigquery
+cybersecurity||Cybersecurity|Cybersécurité|sécurité informatique,information security,infosec,sécurité des systèmes d'information,pentest,soc,owasp,iso 27001,الأمن السيبراني
+networking||Computer networking|Réseaux informatiques|réseaux,network administration,administration réseau,tcp/ip,cisco,ccna,vpn,firewall,شبكات
+sysadmin||System administration|Administration système|administrateur système,system administrator,windows server,active directory,vmware,virtualisation
+testing|programming|Software testing|Tests logiciels|qa,quality assurance,test automation,tests automatisés,selenium,cypress,playwright,pytest,junit,recette
+agile||Agile methods|Méthodes agiles|agile,scrum,kanban,scrum master,safe,sprint
+project_management||Project management|Gestion de projet|project manager,chef de projet,pilotage de projet,pmp,prince2,planning,gestion de projets,إدارة المشاريع
+product_management||Product management|Gestion de produit|product owner,product manager,roadmap,backlog
+ux_design||UX/UI design|Design UX/UI|ux,ui,user experience,figma,sketch,adobe xd,maquettes,wireframes,prototypage,تصميم واجهات
+graphic_design||Graphic design|Design graphique|photoshop,illustrator,indesign,adobe creative suite,graphisme,pao,canva
+erp||ERP systems|Progiciels ERP|erp,sage,odoo,microsoft dynamics,navision
+sap|erp|SAP|SAP|sap fi,sap mm,sap sd,s/4hana,abap
+crm||CRM|CRM|salesforce,hubspot,zoho,gestion de la relation client
+accounting||Accounting|Comptabilité|comptable,accountant,comptabilité générale,general ledger,bilan,clôture comptable,écritures comptables,ifrs,محاسبة
+financial_analysis|accounting|Financial analysis|Analyse financière|contrôle de gestion,financial controller,budget,budgeting,forecasting,reporting financier,fp&a,التحليل المالي
+audit|accounting|Audit|Audit|internal audit,audit interne,commissariat aux comptes,تدقيق
+tax|accounting|Taxation|Fiscalité|tax,déclarations fiscales,tva,vat
+payroll|hr|Payroll|Paie|gestion de la paie,payroll management,bulletins de paie
+hr||Human resources|Ressources humaines|rh,hr,gestion des ressources humaines,grh,الموارد البشرية
+recruitment|hr|Recruitment|Recrutement|talent acquisition,sourcing,recruteur,recruiter,chargé de recrutement,التوظيف
+training|hr|Training and development|Formation professionnelle|ingénierie de formation,learning and development,formateur,تدريب
+labor_law|hr|Labour law|Droit du travail|droit social,employment law,code du travail
+sales||Sales|Vente|commercial,business development,développement commercial,prospection,négociation commerciale,b2b,b2c,account management,مبيعات
+negotiation|sales|Negotiation|Négociation|negotiation,تفاوض
+customer_service||Customer service|Service client|relation client,customer support,support client,customer success,call center,centre d'appels,خدمة العملاء
+marketing||Marketing|Marketing|marketing strategy,stratégie marketing,brand management,تسويق
+digital_marketing|marketing|Digital marketing|Marketing digital|marketing numérique,e-marketing,emailing,growth,التسويق الرقمي
+seo|digital_marketing|SEO/SEA|SEO/SEA|seo,sea,référencement,google ads,adwords,sem
+social_media|digital_marketing|Social media management|Gestion des réseaux sociaux|community management,community manager,social media,réseaux sociaux,meta ads
+content|marketing|Content writing|Rédaction de contenu|copywriting,rédaction web,content marketing,rédacteur,كتابة المحتوى
+communication||Communication|Communication|communication skills,relations publiques,public relations,communication interne,تواصل
+logistics||Logistics|Logistique|supply chain,chaîne logistique,gestion logistique,logisticien,لوجستيك,الخدمات اللوجستية
+warehouse|logistics|Warehouse management|Gestion d'entrepôt|gestion de stock,inventory management,stock management,magasinier,wms,préparation de commandes,إدارة المخازن
+forklift|warehouse|Forklift operation|Conduite de chariot élévateur|cariste,caces,forklift,chariot élévateur,سائق رافعة شوكية
+procurement|logistics|Procurement|Achats|purchasing,acheteur,approvisionnement,sourcing fournisseurs,مشتريات
+transport|logistics|Transport management|Gestion du transport|transport,fleet management,gestion de flotte,dispatch,incoterms,douane,customs,النقل
+driving|transport|Driving|Conduite|permis b,permis c,driver,chauffeur,driving licence,سائق
+manufacturing||Manufacturing|Production industrielle|production,fabrication,usinage,industrial production,إنتاج
+lean|manufacturing|Lean manufacturing|Lean manufacturing|lean,six sigma,kaizen,5s,amélioration continue,continuous improvement
+quality|manufacturing|Quality management|Management de la qualité|qualité,quality control,contrôle qualité,quality assurance,iso 9001,iatf 16949,8d,amdec,fmea,qhse,الجودة
+maintenance|manufacturing|Industrial maintenance|Maintenance industrielle|maintenance,technicien de maintenance,gmao,maintenance préventive,maintenance corrective,صيانة
+electricity|maintenance|Electrical engineering|Électricité|électricité industrielle,electrical,électrotechnique,habilitation électrique,câblage,كهرباء
+mechanics|maintenance|Mechanical engineering|Mécanique|mécanique industrielle,mechanical,génie mécanique,hydraulique,pneumatique,ميكانيك
+automation|maintenance|Industrial automation|Automatisme|automatisme,plc,automates programmables,siemens,schneider,scada,tia portal
+welding|manufacturing|Welding|Soudure|soudage,soudeur,welder,tig,mig,لحام
+cad||CAD|CAO|cao,dao,autocad,solidworks,catia,revit,dessin technique
+civil_engineering||Civil engineering|Génie civil|btp,construction,conducteur de travaux,chantier,structural engineering,الهندسة المدنية
+hse||Health and safety|Hygiène et sécurité|hse,sécurité au travail,occupational safety,prévention des risques,iso 45001,السلامة
+nursing||Nursing|Soins infirmiers|infirmier,infirmière,nurse,soins,تمريض
+pharmacy||Pharmacy|Pharmacie|pharmacien,pharmacist,préparateur en pharmacie,صيدلة
+teaching||Teaching|Enseignement|enseignant,teacher,professeur,pédagogie,تدريس
+legal||Law|Droit|juriste,legal counsel,droit des affaires,contract law,droit des contrats,contrats,compliance,conformité,قانون
+gdpr|legal|GDPR compliance|Conformité RGPD|rgpd,gdpr,dpo,protection des données,data protection
+admin_support||Administrative support|Assistance administrative|assistant administratif,assistante de direction,secrétariat,office management,gestion administrative,saisie de données,data entry,سكرتارية
+ms_office|admin_support|Microsoft Office|Microsoft Office|pack office,word,powerpoint,outlook,office 365,suite office
+hospitality||Hospitality|Hôtellerie-restauration|hôtellerie,restauration,réception,front desk,serveur,waiter,ضيافة
+cooking|hospitality|Cooking|Cuisine|cuisinier,chef de cuisine,cook,commis de cuisine,haccp,طبخ
+retail||Retail|Commerce de détail|vendeur,vendeuse,sales assistant,merchandising,caisse,cashier,grande distribution,بيع بالتجزئة
+banking||Banking|Banque|conseiller clientèle,banking,crédit,credit analysis,analyse de crédit,risk management,gestion des risques,بنوك
+insurance||Insurance|Assurance|assurances,underwriting,souscription,sinistres,claims,تأمين
+leadership||Leadership|Leadership|team management,management d'équipe,encadrement,gestion d'équipe,team lead,manager,قيادة
+teamwork||Teamwork|Travail en équipe|esprit d'équipe,team player,collaboration,العمل الجماعي
+problem_solving||Problem solving|Résolution de problèmes|problem-solving,analytical skills,esprit d'analyse,حل المشكلات
+autonomy||Autonomy|Autonomie|autonome,self-starter,proactivité,rigueur,organisation

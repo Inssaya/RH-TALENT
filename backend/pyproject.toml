@@ -1,0 +1,57 @@
+[project]
+name = "talentmatch-backend"
+version = "1.0.0"
+description = "TalentMatch API: recruitment platform with explainable AI screening"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "pgvector>=0.3",
+  "pydantic-settings>=2.4",
+  "argon2-cffi>=23.1",
+  "pyjwt>=2.9",
+  "python-multipart>=0.0.9",
+  "celery>=5.4",
+  "redis>=5.0",
+  "httpx>=0.27",
+  "pymupdf>=1.24",
+  "python-docx>=1.1",
+  "rapidfuzz>=3.9",
+  "numpy>=1.26",
+  "pyotp>=2.9",
+  "email-validator>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+ocr = ["pytesseract>=0.3", "pillow>=10"]
+s3 = ["boto3>=1.34"]
+bge = ["sentence-transformers>=3"]
+
+[project.scripts]
+tm = "app.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["data/*.json"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008", "E501", "B904"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
