@@ -18,9 +18,28 @@ def current_user_optional(request: Request, db: Session = Depends(get_db)) -> Us
     return user if user and user.status == "active" else None
 
 
-def current_user(user: User | None = Depends(current_user_optional)) -> User:
+def totp_required(db: Session, user: User) -> bool:
+    """Two-factor authentication is mandatory for platform admins and organization admins."""
+    if user.role == "platform_admin":
+        return True
+    if user.role == "recruiter":
+        return db.scalar(select(Membership.id).where(Membership.user_id == user.id, Membership.role == "org_admin")) is not None
+    return False
+
+
+def current_user(request: Request, user: User | None = Depends(current_user_optional),
+                 db: Session = Depends(get_db)) -> User:
     if not user:
         raise HTTPException(401, "Authentication required")
+    # Until two-factor is set up, only the /api/auth/* routes (setup, status, logout) are reachable.
+    if not user.totp_enabled and not request.url.path.startswith("/api/auth/") and totp_required(db, user):
+        raise HTTPException(403, "totp_setup_required")
+    return user
+
+
+def verified_user(user: User = Depends(current_user)) -> User:
+    if user.email_verified_at is None:
+        raise HTTPException(403, "email_not_verified")
     return user
 
 

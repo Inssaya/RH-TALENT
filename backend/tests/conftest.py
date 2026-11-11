@@ -89,12 +89,40 @@ def client():
     return TestClient(app)
 
 
-def register(client, email, role="recruiter", org="Acme Logistics"):
+PASSWORD = "correct-horse-battery"
+
+
+def enroll_totp(client) -> str:
+    """Set up and enable two-factor authentication on the logged-in account; returns the secret."""
+    import pyotp
+    secret = client.post("/api/auth/totp/setup").json()["secret"]
+    assert client.post("/api/auth/totp/enable", json={"code": pyotp.TOTP(secret).now()}).status_code == 200
+    return secret
+
+
+def register(client, email, role="recruiter", org="Acme Logistics", enroll=True):
+    """Register and log in. Organization admins must have 2FA to use the API, so enrol it by default."""
     r = client.post("/api/auth/register", json={
-        "email": email, "password": "correct-horse-battery", "full_name": email.split("@")[0].title(),
+        "email": email, "password": PASSWORD, "full_name": email.split("@")[0].title(),
         "role": role, "organization_name": org if role == "recruiter" else None, "accept_terms": True})
     assert r.status_code == 200, r.text
-    return r.json()
+    out = r.json()
+    if role == "recruiter" and enroll:
+        out["totp_secret"] = enroll_totp(client)
+    return out
+
+
+def verify_email(client, email):
+    """Follow the verification link from the most recent e-mail sent to this address."""
+    import re
+
+    from app import emailer
+    mails = [m for m in emailer.outbox if m["to"] == email and "/verify?token=" in m["body"]]
+    assert mails, f"no verification e-mail for {email}"
+    token = re.search(r"/verify\?token=([\w.-]+)", mails[-1]["body"]).group(1)
+    r = client.post("/api/auth/verify", json={"token": token})
+    assert r.status_code == 200, r.text
+    return token
 
 
 def published_job(client, draft=None):

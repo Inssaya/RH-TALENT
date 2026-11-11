@@ -1,4 +1,5 @@
 import secrets
+import uuid
 from datetime import timedelta
 
 import pyotp
@@ -10,11 +11,20 @@ from sqlalchemy.orm import Session
 from .. import audit, emailer
 from ..config import get_settings
 from ..db import get_db
-from ..deps import OrgContext, current_user, org_context
+from ..deps import OrgContext, current_user, org_context, totp_required
 from ..models import Membership, Organization, User, now
 from ..ratelimit import client_ip, hit, limiter
 from ..schemas import LoginIn, OrgIn, RegisterIn
-from ..security import COOKIE, create_session, hash_password, new_token, token_hash, verify_password
+from ..security import (
+    COOKIE,
+    create_session,
+    hash_password,
+    make_verify_token,
+    new_token,
+    read_verify_token,
+    token_hash,
+    verify_password,
+)
 from ..services import record_consent, unique_slug
 
 router = APIRouter(tags=["auth"])
@@ -30,6 +40,8 @@ def user_out(db: Session, user: User) -> dict:
     m = db.scalar(select(Membership).where(Membership.user_id == user.id))
     return {"id": str(user.id), "email": user.email, "full_name": user.full_name, "role": user.role,
             "locale": user.locale, "totp_enabled": user.totp_enabled,
+            "email_verified": user.email_verified_at is not None,
+            "totp_setup_required": totp_required(db, user) and not user.totp_enabled,
             "organization": {"id": str(m.organization.id), "name": m.organization.name, "role": m.role,
                              "verified": m.organization.verified} if m else None}
 
@@ -56,8 +68,50 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
     # address is not verified at sign-up, so linking would let anyone read another person's applications.
     record_consent(db, "terms", True, user_id=user.id)
     db.flush()
+    send_verification(user)
     _set_cookie(response, user)
     return user_out(db, user)
+
+
+def send_verification(user: User) -> None:
+    link = f"{get_settings().public_url}/verify?token={make_verify_token(user.id, user.email)}"
+    emailer.send(user.email, "TalentMatch : confirmez votre adresse e-mail / confirm your e-mail address",
+                 f"Bonjour {user.full_name},\n\nConfirmez votre adresse e-mail (lien valable 7 jours) :\n{link}\n\n"
+                 f"Hello {user.full_name},\n\nPlease confirm your e-mail address (link valid for 7 days):\n{link}\n\nTalentMatch")
+
+
+class VerifyIn(BaseModel):
+    token: str
+
+
+@router.post("/auth/verify", dependencies=[Depends(limiter("verify", 20, 3600))])
+def verify_email(body: VerifyIn, request: Request, db: Session = Depends(get_db)):
+    """Signed link from the e-mail. Works from any browser; the proof is the signature, not a session."""
+    def email_of(uid: str):
+        try:
+            u = db.get(User, uuid.UUID(uid))
+        except ValueError:
+            return None
+        return u.email if u else None
+
+    uid = read_verify_token(body.token, email_of)
+    if not uid:
+        raise HTTPException(400, "Invalid or expired link")
+    user = db.get(User, uuid.UUID(uid))
+    if user.email_verified_at is None:
+        user.email_verified_at = now()
+        audit.log(db, "auth.email_verified", actor=user, ip=client_ip(request))
+    return {"ok": True}
+
+
+@router.post("/auth/resend-verification")
+def resend_verification(user: User = Depends(current_user)):
+    if user.email_verified_at is not None:
+        return {"ok": True, "already_verified": True}
+    if not hit(f"resend:{user.id}", 3, 3600):
+        raise HTTPException(429, "Too many requests, please retry later")
+    send_verification(user)
+    return {"ok": True}
 
 
 @router.post("/auth/login")
@@ -117,6 +171,8 @@ def reset(body: ResetIn, request: Request, db: Session = Depends(get_db)):
     if not user or not user.reset_expires_at or user.reset_expires_at < now():
         raise HTTPException(400, "Invalid or expired link")
     user.password_hash, user.reset_token_hash, user.reset_expires_at = hash_password(body.password), None, None
+    if user.email_verified_at is None:  # the reset link was delivered to this address: ownership is proven
+        user.email_verified_at = now()
     audit.log(db, "auth.password_reset", actor=user, ip=client_ip(request))
     return {"ok": True}
 
@@ -145,6 +201,8 @@ def totp_enable(body: TotpIn, request: Request, user: User = Depends(current_use
 def totp_disable(body: LoginIn, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Invalid credentials")
+    if totp_required(db, user):
+        raise HTTPException(403, "Two-factor authentication is mandatory for your role")
     user.totp_enabled, user.totp_secret = False, None
     audit.log(db, "auth.2fa_disabled", actor=user, ip=client_ip(request))
     return {"ok": True}

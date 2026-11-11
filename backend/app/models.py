@@ -45,6 +45,7 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | suspended
     totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reset_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

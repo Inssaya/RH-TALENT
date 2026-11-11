@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from .config import get_settings
 from .db import session_factory
+from .models import now
 
 
 def bootstrap(_):
@@ -22,8 +23,9 @@ def bootstrap(_):
         if db.scalar(select(User.id).where(User.email == s.admin_email.lower())):
             print("administrator already exists")
             return
+        # The administrator must enrol two-factor authentication at the first login.
         db.add(User(email=s.admin_email.lower(), password_hash=hash_password(s.admin_password),
-                    full_name="Platform Admin", role="platform_admin"))
+                    full_name="Platform Admin", role="platform_admin", email_verified_at=now()))
         db.commit()
         print(f"administrator {s.admin_email} created")
 
@@ -46,7 +48,7 @@ def seed_demo(args):
         idx = 0
         for i, name in enumerate(names):
             user = User(email=f"recruteur{i + 1}@demo.example.org", password_hash=hash_password(args.password),
-                        full_name=f"Recruteur {name}", role="recruiter")
+                        full_name=f"Recruteur {name}", role="recruiter", email_verified_at=now())
             org = Organization(name=name, slug=services.slugify(name), verified=True, city=rng.choice(["Casablanca", "Rabat", "Tanger"]),
                                country="Maroc", description=f"{name} (entreprise fictive de démonstration).")
             db.add_all([user, org])
@@ -113,6 +115,30 @@ def tasks(args):
         db.commit()
 
 
+def reset_2fa(args):
+    """Lost authenticator: remove the second factor. Mandatory roles must enrol again at next login."""
+    from .models import User
+    with session_factory()() as db:
+        u = db.scalar(select(User).where(User.email == args.email.lower()))
+        if not u:
+            sys.exit(f"no user {args.email}")
+        u.totp_enabled, u.totp_secret = False, None
+        db.commit()
+    print(f"two-factor authentication reset for {args.email}")
+
+
+def verify_email(args):
+    """Mark an address as verified by hand (pilots without SMTP). Only do this after checking the person's identity."""
+    from .models import User
+    with session_factory()() as db:
+        u = db.scalar(select(User).where(User.email == args.email.lower()))
+        if not u:
+            sys.exit(f"no user {args.email}")
+        u.email_verified_at = u.email_verified_at or now()
+        db.commit()
+    print(f"{args.email} marked as verified")
+
+
 def audit_verify(_):
     from .audit import verify_chain
     with session_factory()() as db:
@@ -148,6 +174,10 @@ def main():
     s.add_argument("name", choices=["rejections", "retention", "alerts"])
     s.set_defaults(fn=tasks)
     sub.add_parser("audit-verify").set_defaults(fn=audit_verify)
+    for name, fn in (("reset-2fa", reset_2fa), ("verify-email", verify_email)):
+        s = sub.add_parser(name)
+        s.add_argument("email")
+        s.set_defaults(fn=fn)
     args = p.parse_args()
     args.fn(args)
 

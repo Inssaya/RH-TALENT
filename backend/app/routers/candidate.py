@@ -9,7 +9,7 @@ from ..ai.embeddings import embed
 from ..ai.extraction import extract_profile, profile_text
 from ..ai.skills import taxonomy
 from ..db import get_db
-from ..deps import require_role
+from ..deps import require_role, verified_user
 from ..matching import recommend_jobs
 from ..models import (
     Applicant,
@@ -97,6 +97,9 @@ def update_profile(body: ProfileIn, user: User = Depends(candidate), db: Session
     p = _profile(db, user)
     if not p:
         raise HTTPException(404, "Upload a CV first")
+    # Visibility to recruiters and alert e-mails both rely on the address being the candidate's own.
+    if (body.visible_to_recruiters or body.alerts) and user.email_verified_at is None:
+        raise HTTPException(403, "email_not_verified")
     tax = taxonomy()
     known = {s["id"]: s for s in p.data.get("skills") or []}
     skills, raw = [], []
@@ -140,7 +143,9 @@ def recommendations(user: User = Depends(candidate), db: Session = Depends(get_d
 
 
 @router.post("/apply/{slug}")
-def one_click(slug: str, request: Request, user: User = Depends(candidate), db: Session = Depends(get_db)):
+def one_click(slug: str, request: Request, user: User = Depends(verified_user), db: Session = Depends(get_db)):
+    if user.role != "candidate":
+        raise HTTPException(403, "Forbidden")
     p = _profile(db, user)
     if not p or not p.document_id:
         raise HTTPException(409, "Upload your CV to apply in one click")

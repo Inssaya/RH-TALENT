@@ -11,7 +11,7 @@ from app.main import app
 from app.models import Application, ApplicationEvent, Document
 from app.services import send_pending_rejections
 
-from .conftest import CV_LINA, CV_YOUSSEF, JOB, apply, published_job, register
+from .conftest import CV_LINA, CV_YOUSSEF, JOB, apply, published_job, register, verify_email
 
 
 def u():
@@ -132,6 +132,7 @@ def test_candidate_space_and_matching(client):
     cand = TestClient(app)
     email = f"lina-{u()}@mail.example.org"
     register(cand, email, role="candidate")
+    verify_email(cand, email)
     assert cand.post(f"/api/candidate/apply/{job['slug']}").status_code == 409  # no CV yet
     r = cand.post("/api/candidate/profile/cv", files={"file": ("cv.txt", CV_LINA.encode(), "text/plain")})
     assert r.status_code == 200 and r.json()["data"]["education_level"] == 7

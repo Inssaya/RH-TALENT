@@ -41,6 +41,7 @@ def suggest_talents(db: Session, job: Job, version: JobVersion, limit: int = 15)
     applied = select(Applicant.user_id).join(Application).where(Application.job_id == job.id, Applicant.user_id.is_not(None))
     q = (select(CandidateProfile, User).join(User, User.id == CandidateProfile.user_id)
          .where(CandidateProfile.visible_to_recruiters.is_(True), CandidateProfile.embedding.is_not(None),
+                User.email_verified_at.is_not(None),
                 CandidateProfile.user_id.notin_(applied))
          .order_by(CandidateProfile.embedding.cosine_distance(version.embedding)).limit(50))
     out = []
@@ -60,7 +61,8 @@ def send_job_alerts(db: Session) -> int:
     week_ago = now() - timedelta(days=7)
     for alert, user, prof in db.execute(
             select(JobAlert, User, CandidateProfile).join(User, User.id == JobAlert.user_id)
-            .join(CandidateProfile, CandidateProfile.user_id == User.id).where(JobAlert.enabled.is_(True))):
+            .join(CandidateProfile, CandidateProfile.user_id == User.id)
+            .where(JobAlert.enabled.is_(True), User.email_verified_at.is_not(None))):
         recs = [r for r in recommend_jobs(db, prof, 5, user.id)
                 if not r["applied"] and r["job"].published_at and r["job"].published_at >= (alert.last_sent_at or week_ago)]
         if not recs:
