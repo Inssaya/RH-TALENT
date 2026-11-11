@@ -1,0 +1,19 @@
+Data Scientist
+Lieu : Casablanca, Maroc
+CDI - télétravail partiel
+
+Nous recherchons un data scientist pour concevoir, entraîner et mettre en production des modèles de machine learning au sein de notre équipe data. Vous travaillerez avec les équipes produit et ingénierie pour transformer les données en décisions.
+
+Missions
+- Concevoir et entraîner des modèles de machine learning
+- Mettre en production les modèles avec Docker
+- Analyser les données avec SQL
+
+Profil recherché
+- 3 ans d'expérience en data science
+- Maîtrise de Python et du machine learning
+- Expérience de mise en production de modèles
+- Bac+5 en data science ou statistiques
+- Français courant, anglais professionnel
+
+Atouts : Docker, PyTorch

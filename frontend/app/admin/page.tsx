@@ -10,11 +10,13 @@ export default function Admin() {
   const { t, locale } = useApp();
   const user = useGuard("platform_admin");
   const [tab, setTab] = useState<Tab>("overview");
-  const [data, setData] = useState<any>(null);
+  const [loaded, setLoaded] = useState<{ tab: Tab; value: any } | null>(null);
+  // Only render data fetched for the current tab (avoids showing a stale shape while switching).
+  const data = loaded && loaded.tab === tab ? loaded.value : null;
   const [chain, setChain] = useState<any>(null);
   const [error, setError] = useState("");
   const paths: Record<Tab, string> = { overview: "/admin/stats", organizations: "/admin/organizations", jobs: "/admin/jobs", requests: "/admin/requests", audit: "/admin/audit", ai: "/admin/ai" };
-  const load = useCallback(() => { setData(null); api(paths[tab]).then(setData).catch((e: ApiError) => setError(String(e.detail))); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+  const load = useCallback(() => { api(paths[tab]).then((value) => setLoaded({ tab, value })).catch((e: ApiError) => setError(String(e.detail))); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (user) load(); }, [user, load]);
   if (!user) return <Spinner />;
   const act = (fn: () => Promise<unknown>) => fn().then(load).catch((e: ApiError) => setError(String(e.detail)));

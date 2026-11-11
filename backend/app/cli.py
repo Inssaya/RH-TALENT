@@ -45,7 +45,7 @@ def seed_demo(args):
             return
         idx = 0
         for i, name in enumerate(names):
-            user = User(email=f"recruteur{i + 1}@demo.talentmatch.local", password_hash=hash_password(args.password),
+            user = User(email=f"recruteur{i + 1}@demo.example.org", password_hash=hash_password(args.password),
                         full_name=f"Recruteur {name}", role="recruiter")
             org = Organization(name=name, slug=services.slugify(name), verified=True, city=rng.choice(["Casablanca", "Rabat", "Tanger"]),
                                country="Maroc", description=f"{name} (entreprise fictive de démonstration).")
@@ -55,7 +55,8 @@ def seed_demo(args):
             for k in range(3):
                 draft = make_job(rng, occs[(i * 3 + k) % len(occs)], "fr" if (i + k) % 3 else "en")
                 clean = {kk: v for kk, v in draft.items() if not kk.startswith("_") and kk != "occupation"}
-                clean["country"] = "Maroc"
+                clean["country"] = {"Casablanca": "Maroc", "Rabat": "Maroc", "Tanger": "Maroc", "Marrakech": "Maroc",
+                                    "Paris": "France", "Lyon": "France", "Tunis": "Tunisie"}.get(clean["city"], "Maroc")
                 job = Job(organization_id=org.id, slug=services.unique_slug(db, Job, f"{clean['title']}-{name}"),
                           created_by=user.id, weights=dict(DEFAULT_WEIGHTS), status="published", published_at=services.now())
                 db.add(job)
@@ -77,7 +78,7 @@ def seed_demo(args):
                     services.process_application(db, app.id)
             db.commit()
             print(f"{name}: 3 jobs")
-    print(f"done. Recruiter logins: recruteur1..10@demo.talentmatch.local / {args.password}")
+    print(f"done. Recruiter logins: recruteur1..10@demo.example.org / {args.password}")
 
 
 def synth(args):

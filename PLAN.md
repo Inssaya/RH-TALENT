@@ -10,9 +10,10 @@ Source of truth for requirements: `docs/TalentMatch_Cahier_des_Charges.pdf`.
 |---|---|---|
 | `backend/` API, AI pipeline, scoring, shortlist, GDPR, audit, CLI | **Done** | 39 pytest tests pass on PostgreSQL 16 + pgvector; `python -m app.cli eval` passes |
 | `backend/alembic/` initial migration `0001` | **Done** | `alembic upgrade head` applied on a clean database |
-| `frontend/` Next.js pages and components | **Written, never built** | Nothing. `lib/i18n.ts` is missing, so it does not compile yet |
-| Docker, Caddy, compose, `.env.example` | **Not started** | |
-| CI (GitHub Actions) | **Not started** | |
+| `frontend/` Next.js pages and components | **Done (T1)** | `tsc` clean, `next build` OK, `frontend/scripts/check-i18n.py` finds no missing French key |
+| Docker, Caddy, compose, `.env.example`, backup/restore scripts | **Done (T3)** | Images built, stack up, `/api/ready` OK, `seed-demo` gives 30 jobs on the home page |
+| `e2e/smoke.mjs` six browser journeys | **Done (T4)** | 6/6 passed twice in a row against the compose stack |
+| CI (GitHub Actions) | **Not started** (T5) | |
 | README, runbook, compliance and evaluation docs | **Not started** | |
 
 Local services used so far (not containers): PostgreSQL 16 (`talentmatch` / `talentmatch`, databases
@@ -211,3 +212,20 @@ Run the full check once more (pytest, eval, frontend build, compose up, e2e), co
 - Never weaken an invariant from section 2 to make something pass. Never skip or delete a test to get green.
 - Keep answers and code small: reuse existing helpers before adding new ones.
 - If a requirement is unclear, the PDF specification decides; if it is silent, choose the simplest option and note it in the README.
+
+## 6. Notes from T3 and T4 (read before T5)
+
+- **Sandbox builds.** The agent proxy blocks Debian and Alpine mirrors and rate-limits Docker Hub (429).
+  Local verification used: `docker buildx build --allow network.host --network host --build-arg WITH_OCR=0
+  --build-arg HTTPS_PROXY=$HTTPS_PROXY -f backend/Dockerfile -t talentmatch-api:local --load .` (same for
+  `frontend/Dockerfile`), then `docker compose up -d --no-build` with an override that sets `image:` to the local
+  tags. Base images were pulled from `mirror.gcr.io/library/<image>` and retagged. The default image
+  (`WITH_OCR=1`, Tesseract) was therefore **not built here**; build it in CI.
+- **Rate limits** must be off for the E2E run (`RATE_LIMIT_ENABLED=false` in `.env`); production keeps them on.
+- **E2E runner** is a plain Node script (`e2e/smoke.mjs`, uses the `playwright` library), not `@playwright/test`,
+  because only the library is preinstalled. Run: `BASE_URL=http://localhost ADMIN_EMAIL=... ADMIN_PASSWORD=... node e2e/smoke.mjs`.
+- **Bugs found by T4 and fixed:** demo e-mails used a reserved `.local` domain that login rejects; the admin page
+  crashed when switching tabs (stale data of another tab).
+- **Turnstile:** the API verifies a token when `TURNSTILE_SECRET` is set, but no widget exists in the apply form.
+  Leave `TURNSTILE_SECRET` empty until the widget is added, otherwise every application is refused.
+- Postgres and Redis used by the backend tests (outside Docker) stop between sessions; the compose stack has its own.
