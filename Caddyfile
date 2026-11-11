@@ -1,0 +1,18 @@
+# DOMAIN=example.com  -> automatic HTTPS (Let's Encrypt)
+# DOMAIN=:80          -> plain HTTP, for local tests only
+{$DOMAIN:localhost} {
+	encode zstd gzip
+	request_body {
+		max_size 12MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

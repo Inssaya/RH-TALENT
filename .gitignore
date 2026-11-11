@@ -17,3 +17,4 @@ var/
 synth.json
 backend/app/data/esco_extra.json
 test-results/
+ca/*.crt

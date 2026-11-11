@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["data/*.json"]
+app = ["data/*.json", "data/*.tsv"]
 
 [tool.ruff]
 line-length = 110
