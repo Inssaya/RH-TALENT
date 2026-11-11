@@ -9,8 +9,8 @@ import math
 import random
 from pathlib import Path
 
-from .ai.extraction import extract_rules, profile_text
 from .ai.embeddings import embed
+from .ai.extraction import extract_rules, profile_text
 from .ai.scoring import DEFAULT_WEIGHTS, compute_score, job_text
 from .ai.skills import taxonomy
 from .ai.textutil import tokens
