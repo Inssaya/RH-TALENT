@@ -11,7 +11,7 @@ from .. import audit, emailer
 from ..config import get_settings
 from ..db import get_db
 from ..deps import OrgContext, current_user, org_context
-from ..models import Applicant, Membership, Organization, User, now
+from ..models import Membership, Organization, User, now
 from ..ratelimit import client_ip, hit, limiter
 from ..schemas import LoginIn, OrgIn, RegisterIn
 from ..security import COOKIE, create_session, hash_password, new_token, token_hash, verify_password
@@ -52,10 +52,8 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
         db.add(Membership(user_id=user.id, organization_id=org.id, role="org_admin"))
         audit.log(db, "organization.created", actor=user, resource=f"organization:{org.id}",
                   organization_id=org.id, ip=client_ip(request))
-    else:
-        # link earlier account-less applications made with the same e-mail
-        for a in db.scalars(select(Applicant).where(Applicant.email == email, Applicant.user_id.is_(None))):
-            a.user_id = user.id
+    # Earlier account-less applications are deliberately NOT linked to the new account: the e-mail
+    # address is not verified at sign-up, so linking would let anyone read another person's applications.
     record_consent(db, "terms", True, user_id=user.id)
     db.flush()
     _set_cookie(response, user)

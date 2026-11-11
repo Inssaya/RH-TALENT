@@ -207,3 +207,24 @@ def test_new_version_rescores_and_weights(client):
     assert client.put(f"/api/jobs/{job['id']}/weights", json={"weights": {"skills": 0.5, "requirements": 0.1}}).status_code == 200
     snaps = client.get(f"/api/jobs/{job['id']}/snapshots").json()
     assert len(snaps) >= 1
+
+
+def test_unverified_email_never_gives_access_to_someone_elses_applications(client):
+    """Sign-up does not verify e-mail ownership, so it must not link earlier anonymous applications."""
+    register(client, f"s-{u()}@sec.example.org", org="Sec")
+    job, job2 = published_job(client), published_job(client)
+    victim = f"victim-{u()}@example.com"
+    apply(client, job["slug"], CV_LINA, victim, "Victim Person")
+
+    attacker = TestClient(app)
+    register(attacker, victim, role="candidate")  # registers with the victim's address
+    assert attacker.get("/api/candidate/applications").json() == []
+    assert attacker.get("/api/candidate/export").json()["applications"] == []
+
+    other = TestClient(app)
+    register(other, f"o-{u()}@example.org", role="candidate")  # logged in, types the victim's address
+    r = other.post(f"/api/public/jobs/{job2['slug']}/apply", data={"full_name": "Other", "email": victim, "consent": "true"},
+                   files={"file": ("cv.txt", CV_LINA.encode(), "text/plain")})
+    assert r.status_code == 200
+    mine = other.get("/api/candidate/applications").json()
+    assert len(mine) == 1 and mine[0]["job"]["slug"] == job2["slug"]

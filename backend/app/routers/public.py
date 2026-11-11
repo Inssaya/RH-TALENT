@@ -97,7 +97,12 @@ def _turnstile(token: str | None, ip: str) -> None:
 def create_application(db: Session, job: Job, *, email: str, full_name: str, phone: str, locale: str,
                        data: bytes, filename: str, source: str, user: User | None, ip: str) -> tuple[Application, str]:
     email = email.strip().lower()
-    applicant = db.scalar(select(Applicant).where(Applicant.email == email))
+    # An account only ever owns applicant records created while logged in; anonymous applications are
+    # matched by e-mail among anonymous records. Nothing is linked on the strength of an unverified e-mail.
+    if user:
+        applicant = db.scalar(select(Applicant).where(Applicant.user_id == user.id))
+    else:
+        applicant = db.scalar(select(Applicant).where(Applicant.email == email, Applicant.user_id.is_(None)))
     if not applicant:
         applicant = Applicant(email=email, full_name=full_name.strip(), phone=phone.strip(), locale=locale,
                               user_id=user.id if user else None)
@@ -106,8 +111,6 @@ def create_application(db: Session, job: Job, *, email: str, full_name: str, pho
     else:
         applicant.full_name = full_name.strip() or applicant.full_name
         applicant.phone = phone.strip() or applicant.phone
-        if user and not applicant.user_id:
-            applicant.user_id = user.id
     if db.scalar(select(Application.id).where(Application.job_id == job.id, Application.applicant_id == applicant.id)):
         raise HTTPException(409, "You have already applied to this job")
     doc = store_document(db, data, filename, owner_user_id=None)
