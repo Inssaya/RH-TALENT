@@ -76,6 +76,8 @@ Behaviour built in: 3 exponential retries, then **rule-based mode** for extracti
 - **`POSTGRES_PASSWORD`**: `docker compose exec db psql -U talentmatch -c "ALTER USER talentmatch PASSWORD '…'"`, update `.env`,
   `docker compose up -d`.
 - **Provider keys** (`MISTRAL_API_KEY`, SMTP, S3): revoke at the provider, create a new one, edit `.env`, restart api and worker.
+- **Lost authenticator (admin or organization admin)**: after checking the person's identity, `docker compose exec api python -m app.cli reset-2fa <address>`;
+  they must enrol again at their next login. (The mandatory-2FA login flow and this command were exercised in development.)
 - **Admin password**: there is no change-password screen yet; use the reset link flow ("Forgot password?") or set it directly (this command was run once and works):
   `docker compose exec api python -c "from app.db import session_factory; from app.models import User; from app.security import hash_password; from sqlalchemy import select; s=session_factory()(); u=s.scalar(select(User).where(User.email=='admin@example.org')); u.password_hash=hash_password('NEW-PASSWORD'); s.commit()"`
 - Rotate at least every 6 months. Check Git history is clean (`gitleaks`, run in CI).
@@ -118,5 +120,6 @@ Behaviour built in: 3 exponential retries, then **rule-based mode** for extracti
 | Monthly restore test | restore the latest backup on a spare VM (procedure 2) |
 | Retention purge | automatic nightly (beat). Run now: `docker compose exec api python -m app.cli task retention` |
 | Pending rejection e-mails | automatic every minute. Run now: `... task rejections` |
+| Confirm an address by hand (no SMTP) | `docker compose exec api python -m app.cli verify-email <address>` after checking identity |
 | GDPR requests | admin, *GDPR requests*: answer within 30 days (`ERASURE_DAYS`) |
 | Updates | `git pull && ./scripts/backup.sh && docker compose up -d --build` |

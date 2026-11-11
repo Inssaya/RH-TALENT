@@ -57,7 +57,8 @@ export default function ApplyPanel({ slug, open }: { slug: string; open: boolean
       {error && <Alert>{error}</Alert>}
       {user?.role === "candidate" && (
         <>
-          <button className="btn-primary w-full" onClick={oneClick} disabled={busy}>{t("Apply in one click")}</button>
+          <button className="btn-primary w-full" onClick={oneClick} disabled={busy || !user.email_verified}>{t("Apply in one click")}</button>
+          {!user.email_verified && <Alert kind="warning">{t("Confirm your e-mail address (link sent at sign-up) to apply in one click.")}</Alert>}
           <p className="muted">{t("Uses the CV of your profile.")} <Link href="/candidate" className="text-brand-700 underline">{t("My space")}</Link></p>
           <hr className="border-slate-200" />
           <p className="muted">{t("Or apply with another CV:")}</p>

@@ -161,4 +161,15 @@ export const fr: Record<string, string> = {
   "You must review the list of candidates and reasons before a grouped rejection": "Vous devez relire la liste des candidats et des motifs avant un refus groupé",
   "organization_name is required for employers": "Le nom de l'entreprise est obligatoire pour les employeurs", "Request failed": "La requête a échoué",
   "Unsupported file: unsupported file type": "Fichier non pris en charge : type non reconnu", "Unsupported file: document longer than 15 pages": "Fichier non pris en charge : plus de 15 pages",
+  // ---- e-mail verification and mandatory two-factor
+  "Confirm your e-mail address (link sent at sign-up) to apply in one click.": "Confirmez votre adresse e-mail (lien envoyé à l'inscription) pour postuler en un clic.",
+  "Confirm your e-mail address to become visible to recruiters or receive job alerts.": "Confirmez votre adresse e-mail pour être visible des recruteurs ou recevoir des alertes emploi.",
+  "Continue": "Continuer", "E-mail confirmation": "Confirmation de l'e-mail", "Link sent.": "Lien envoyé.",
+  "Mandatory for organization administrators.": "Obligatoire pour les administrateurs d'organisation.",
+  "Please confirm your e-mail address: we sent you a link.": "Veuillez confirmer votre adresse e-mail : nous vous avons envoyé un lien.",
+  "Send the link again": "Renvoyer le lien", "Sign in and request a new link from the banner at the top of the page.": "Connectez-vous et demandez un nouveau lien depuis le bandeau en haut de la page.",
+  "Your account stays locked until you finish this step.": "Votre compte reste verrouillé tant que vous n'avez pas terminé cette étape.",
+  "Your e-mail address is confirmed.": "Votre adresse e-mail est confirmée.",
+  "email_not_verified": "Confirmez d'abord votre adresse e-mail (lien envoyé à l'inscription).", "totp_setup_required": "Configurez l'authentification à deux facteurs pour continuer.",
+  "Two-factor authentication is mandatory for your role": "L'authentification à deux facteurs est obligatoire pour votre rôle",
 };

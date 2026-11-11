@@ -56,6 +56,10 @@ Browser ──HTTPS──> Caddy ──/api/*──> api  (FastAPI, uvicorn)  �
 5. **Erasure is real.** No soft delete of personal data; files are removed from storage.
 6. **Audit log is append-only and hash-chained** (`app/audit.py`). Sensitive actions call `audit.log`.
 7. **Identity never enters the score.** PII is redacted before any provider call (`guard.redact_pii`).
+8. **Unverified e-mail never grants access to a person's data or messages.** Accounts never inherit anonymous
+   applications by address; one-click apply, recruiter visibility and alerts need `email_verified_at`.
+9. **Organization admins and platform admins need two-factor.** `deps.current_user` only lets `/api/auth/*` through until
+   it is enrolled, and it cannot be disabled for those roles.
 
 ### Backend map
 
@@ -240,3 +244,15 @@ Bug fixed on the way: `beat` was permanently "unhealthy" (the image healthcheck 
 Not verified: the GitHub Actions run, the default image with Tesseract, any real LLM / SMTP / S3 / ClamAV / Sentry,
 real HTTPS with Let's Encrypt, runbook procedures 1 and 3 to 10, performance under load (the k6 load test of the
 specification was not written), accessibility audit (axe), and human review of FR/AR wording and legal texts.
+
+## 8. Update: e-mail verification and mandatory two-factor
+
+Added after the architect's review. Backend: signed 7-day verification token bound to the address
+(`security.make_verify_token`), `POST /api/auth/verify`, `POST /api/auth/resend-verification`; password-reset and
+invitation links also verify; migration `0002`; `deps.verified_user`; 2FA enforcement in `deps.current_user`;
+CLI `reset-2fa` and `verify-email`. Frontend: `/verify`, `/security`, banner for unverified users, guard redirect.
+Tests: `tests/test_security.py` (9 tests, mutation-checked: removing either gate makes 4 of them fail). The E2E reads
+verification links from the API logs (`docker compose logs`, or `E2E_MAIL_CMD`) and enrols/uses TOTP itself; after the
+first run on a stack, pass `ADMIN_TOTP_SECRET` (printed by the run).
+
+Known remaining: unverified employers can still create and publish jobs; no change-password screen; no resend-tracking-link.

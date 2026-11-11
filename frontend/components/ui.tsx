@@ -59,5 +59,7 @@ export function Spinner() {
 export function useGuard(role: "candidate" | "recruiter" | "platform_admin") {
   const { user } = useApp();
   if (typeof window !== "undefined" && user === null) window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+  // Organization and platform admins must enrol two-factor authentication before anything else.
+  if (typeof window !== "undefined" && user?.totp_setup_required) { window.location.href = "/security"; return null; }
   return user && user.role === role ? user : null;
 }

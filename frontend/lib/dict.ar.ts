@@ -41,4 +41,7 @@ export const ar: Record<string, string> = {
   "This job is not open": "هذا العرض غير مفتوح", "An account already exists for this e-mail": "يوجد حساب بهذا البريد الإلكتروني", "Too many requests, please retry later": "طلبات كثيرة، حاول لاحقا",
   "New": "جديد", "AI shortlist": "القائمة المختصرة", "To contact": "للاتصال", "Interview": "مقابلة", "Offer made": "تم تقديم عرض", "Hired": "تم التوظيف", "Rejected": "مرفوض", "Withdrawn": "مسحوب",
   "Under review": "قيد الدراسة", "Not selected": "غير مقبول", "Selected": "مقبول", "Draft": "مسودة", "Published": "منشور", "Closed": "مغلق", "Suspended": "معلّق",
+  "Continue": "متابعة", "E-mail confirmation": "تأكيد البريد الإلكتروني", "Your e-mail address is confirmed.": "تم تأكيد بريدك الإلكتروني.",
+  "Please confirm your e-mail address: we sent you a link.": "يرجى تأكيد بريدك الإلكتروني: أرسلنا لك رابطا.", "Send the link again": "إعادة إرسال الرابط", "Link sent.": "تم إرسال الرابط.",
+  "email_not_verified": "أكّد بريدك الإلكتروني أولا.", "totp_setup_required": "فعّل التحقق بخطوتين للمتابعة.",
 };

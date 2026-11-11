@@ -3,6 +3,7 @@
 //   BASE_URL=http://localhost ADMIN_EMAIL=... ADMIN_PASSWORD=... node e2e/smoke.mjs
 //
 // Needs the `playwright` package (preinstalled in the sandbox; elsewhere: npm i -D playwright).
+// ADMIN_TOTP_SECRET is only needed when the admin already enrolled two-factor in an earlier run.
 // The UI is checked in French, the default locale. Exits 1 on the first failed journey.
 // Start the stack with RATE_LIMIT_ENABLED=false: the run registers several accounts from one IP,
 // which the production limit (5 registrations/hour/IP) would block.
@@ -10,6 +11,9 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+
+import crypto from "node:crypto";
+import { execSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
@@ -22,6 +26,40 @@ const CV = path.join(dir, "fixtures/cv-lina.pdf");
 const JOB_TEXT = (await import("node:fs")).readFileSync(path.join(dir, "fixtures/job-data-scientist.txt"), "utf8");
 const run = Date.now().toString(36);
 const PASSWORD = "correct-horse-battery-2026";
+
+// ---- helpers: TOTP codes (RFC 6238) and reading e-mails from the stack logs (no SMTP in tests)
+function totp(secretB32) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const ch of secretB32.replace(/=+$/, "").toUpperCase()) bits += alphabet.indexOf(ch).toString(2).padStart(5, "0");
+  const key = Buffer.from(bits.match(/.{8}/g).map((b) => parseInt(b, 2)));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
+  const h = crypto.createHmac("sha1", key).update(counter).digest();
+  const o = h[19] & 15;
+  return String(((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000)).padStart(6, "0");
+}
+
+// Without SMTP the API logs every e-mail. E2E_MAIL_CMD can point at another log source.
+function verificationToken(email) {
+  const cmd = process.env.E2E_MAIL_CMD || "docker compose logs --no-color --tail 600 api worker";
+  const logs = execSync(cmd, { encoding: "utf8", maxBuffer: 20_000_000 });
+  const at = logs.lastIndexOf(`to=${email}`);
+  assert.ok(at >= 0, `no e-mail logged for ${email}`);
+  const m = /verify\?token=([\w.-]+)/.exec(logs.slice(at));
+  assert.ok(m, `no verification link in the e-mail for ${email}`);
+  return m[1];
+}
+
+// Enrol two-factor on the /security page; returns the secret.
+async function enrolTotp(page) {
+  await page.waitForURL("**/security");
+  const secret = (await page.locator("#totp-secret").innerText()).trim();
+  await page.getByLabel("Code d'authentification").fill(totp(secret));
+  await page.getByRole("button", { name: "Activer" }).click();
+  await page.getByText("L'authentification à deux facteurs est active").waitFor();
+  return secret;
+}
 
 const browser = await chromium.launch();
 const results = [];
@@ -73,7 +111,10 @@ await journey("1. Employer registers, creates a job from pasted text, publishes 
   await recruiter.getByLabel("Mot de passe (10 caractères minimum)").fill(PASSWORD);
   await recruiter.getByRole("checkbox").check();
   await recruiter.getByRole("button", { name: "Créer mon compte" }).click();
-  await recruiter.waitForURL("**/recruiter");
+  // An organization admin is locked to the two-factor setup page until it is done.
+  await enrolTotp(recruiter);
+  await recruiter.goto("/recruiter");
+  await recruiter.getByRole("link", { name: "+ Nouvelle offre" }).waitFor();
   await recruiter.getByRole("link", { name: "+ Nouvelle offre" }).click();
   await recruiter.getByRole("tab", { name: "Coller un texte" }).click();
   await recruiter.getByLabel("Collez votre annonce existante").fill(JOB_TEXT);
@@ -141,6 +182,11 @@ await journey("4. Candidate registers, uploads a CV, gets recommendations, appli
   await cand.getByRole("checkbox").check();
   await cand.getByRole("button", { name: "Créer mon compte" }).click();
   await cand.waitForURL("**/candidate");
+  await cand.getByText("Veuillez confirmer votre adresse e-mail").waitFor();     // banner for unverified accounts
+  await cand.goto(`/verify?token=${verificationToken(`karim-${run}@e2e.example.org`)}`);
+  await cand.getByText("Votre adresse e-mail est confirmée.").waitFor();
+  await cand.goto("/candidate");
+  assert.equal(await cand.getByText("Veuillez confirmer votre adresse e-mail").count(), 0);
   await cand.locator("#cv").setInputFiles(CV);
   await cand.getByText(/CV analysé/).waitFor();
   await cand.getByRole("button", { name: "Enregistrer et valider" }).click();
@@ -163,7 +209,21 @@ await journey("5. Platform admin opens every tab and verifies the audit chain", 
   await admin.getByLabel("E-mail").fill(ADMIN_EMAIL);
   await admin.getByLabel("Mot de passe").fill(ADMIN_PASSWORD);
   await admin.getByRole("button", { name: "Se connecter" }).click();
-  await admin.waitForURL("**/admin");
+  // First login: forced two-factor enrolment. Later runs need ADMIN_TOTP_SECRET (printed the first time).
+  const where = await Promise.race([
+    admin.waitForURL("**/security").then(() => "enrol"),
+    admin.getByLabel("Code d'authentification").waitFor().then(() => "code"),
+  ]);
+  if (where === "enrol") {
+    console.log(`\n   admin two-factor enrolled; for later runs set ADMIN_TOTP_SECRET=${await enrolTotp(admin)}`);
+  } else {
+    assert.ok(process.env.ADMIN_TOTP_SECRET, "the admin already has two-factor enabled: set ADMIN_TOTP_SECRET");
+    await admin.getByLabel("Code d'authentification").fill(totp(process.env.ADMIN_TOTP_SECRET));
+    await admin.getByRole("button", { name: "Se connecter" }).click();
+    await admin.waitForURL("**/admin");   // let the login finish before navigating, or the session cookie is lost
+  }
+  await admin.goto("/admin");
+  await admin.getByRole("tab", { name: "Vue d'ensemble" }).waitFor();
   for (const tab of ["Organisations", "Offres", "Demandes RGPD", "Journal d'audit", "Supervision de l'IA", "Vue d'ensemble"]) {
     await admin.getByRole("tab", { name: tab }).click();
     await admin.waitForTimeout(600);

@@ -45,6 +45,12 @@ docker compose exec api python -m app.cli seed-demo     # optional: 10 companies
 Open `http://localhost`. Administrator: `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`. Demo recruiters:
 `recruteur1@demo.example.org` … `recruteur10@…` with the `seed-demo` password (`demo-password-2026` by default).
 
+**First login:** administrators and organization admins (every company's first user, and the demo recruiters) are taken
+to a two-factor setup page and cannot use anything else until they enrol an authenticator app. Candidates must confirm
+their e-mail address (link sent at sign-up) before one-click apply, recruiter visibility or job alerts. Without SMTP the
+link is only written to the API log (`docker compose logs api`); a pilot operator can confirm an address by hand with
+`python -m app.cli verify-email <address>`, and clear a lost authenticator with `python -m app.cli reset-2fa <address>`.
+
 For production set `DOMAIN` to your domain (Caddy gets a Let's Encrypt certificate), `PUBLIC_URL=https://…`,
 `COOKIE_SECURE=true`, and configure SMTP; see `docs/runbook.md`.
 
@@ -66,7 +72,8 @@ python3 scripts/check-i18n.py                                   # every t("…")
 BASE_URL=http://localhost ADMIN_EMAIL=… ADMIN_PASSWORD=… node e2e/smoke.mjs
 ```
 
-CLI (`python -m app.cli <command>`): `bootstrap`, `seed-demo`, `synth`, `eval`, `import-esco`, `task`, `audit-verify`.
+CLI (`python -m app.cli <command>`): `bootstrap`, `seed-demo`, `synth`, `eval`, `import-esco`, `task`, `audit-verify`,
+`reset-2fa`, `verify-email`.
 
 ## Configuration
 
@@ -79,14 +86,14 @@ All settings are environment variables (`backend/app/config.py`, documented in `
 | Embeddings | `EMBEDDINGS_PROVIDER` = `hash` (default, offline) / `mistral` / `bge-m3`, `SEM_LOW`, `SEM_HIGH` | `bge-m3` needs `pip install ".[bge]"`. Recalibrate `SEM_LOW/HIGH` when changing provider (`docs/evaluation.md`). |
 | Antivirus | `CLAMAV_HOST`, `docker compose --profile antivirus up -d` | Without it, uploads are only type-checked (magic bytes), size-limited and stored privately. |
 | File storage | `STORAGE_BACKEND=s3`, `S3_*` | Needs the `s3` extra (included in the image). Default: local volume. |
-| E-mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | Without `SMTP_HOST`, messages are only logged: candidates will not receive their tracking links. |
+| E-mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | **Required in production.** Without `SMTP_HOST` messages are only logged: nobody receives tracking links, verification links or password resets. |
 | Rate limits | built in (`RATE_LIMIT_ENABLED`) | 5 applications/h/IP, 3/day/e-mail, 5 sign-ups/h/IP, 30 chat messages/10 min/user. |
 | GDPR | `RETENTION_MONTHS`, `ERASURE_DAYS`, `NOTICE_VERSION`, `REJECT_UNDO_MINUTES` | Retention purge runs nightly (beat). |
 | Monitoring | `SENTRY_DSN` | Needs `pip install sentry-sdk`; not in the image yet. Logs are JSON on stdout. |
 
 ## Tests and quality gates
 
-- Backend: 40 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
+- Backend: 49 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
   cases, identity-neutrality, injection and hidden-text handling).
 - `python -m app.cli eval` fails if the ranking does not beat a BM25 baseline by 0.05 nDCG@10 or if the
   counterfactual score gap reaches 0.03. **These numbers come from synthetic data** (see `docs/evaluation.md`).
@@ -109,10 +116,11 @@ Be aware of these before using the platform with real candidates.
 - The built-in skill taxonomy has about 135 entries. Import the full ESCO export with `python -m app.cli import-esco`.
 - Arabic UI covers the public, authentication, candidate and tracking screens; recruiter and admin screens fall
   back to English. French and Arabic wording has not been reviewed by native speakers.
-- **E-mail addresses are not verified at sign-up.** For that reason an account never inherits earlier account-less
-  applications made with the same address (regression test included). Add verification before relying on account e-mails.
-- Two-factor authentication is optional for everyone; the specification makes it mandatory for organization and platform
-  administrators. There is no change-password screen (only the reset-link flow).
+- E-mail verification (signed 7-day link) gates one-click apply, recruiter visibility and job alerts only. Unverified
+  users can still browse, apply as a visitor, and (employers) create and publish jobs; an account never inherits earlier
+  account-less applications made with the same address. Two-factor is mandatory for organization admins and platform
+  admins, optional for other roles. There is no change-password screen (only the reset-link flow) and no "resend
+  tracking link" feature for account-less candidates.
 - Captcha: the API can verify Cloudflare Turnstile, but the apply form has no widget. Keep `TURNSTILE_SECRET` empty.
 - ClamAV, S3, SMTP, Sentry and bge-m3 are wired but were not exercised against real services.
 - Backups are logical dumps (`scripts/backup.sh`). The specification's 15-minute RPO needs continuous WAL archiving

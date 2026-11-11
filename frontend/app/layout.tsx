@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Providers from "@/components/Providers";
+import VerifyBanner from "@/components/VerifyBanner";
 import { translate } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import { SITE_URL } from "@/lib/api";
@@ -22,6 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded focus:bg-white focus:p-2">{t("Skip to content")}</a>
         <Providers initialLocale={locale}>
           <Header />
+          <VerifyBanner />
           <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
           <footer className="border-t border-slate-200 bg-white">
             <div className="mx-auto flex max-w-6xl flex-wrap gap-x-6 gap-y-2 px-4 py-5 text-sm text-slate-500">

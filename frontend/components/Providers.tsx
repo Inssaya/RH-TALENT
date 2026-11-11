@@ -5,7 +5,7 @@ import { Locale, translate } from "@/lib/i18n";
 
 export type User = {
   id: string; email: string; full_name: string; role: "candidate" | "recruiter" | "platform_admin";
-  locale: string; totp_enabled: boolean;
+  locale: string; totp_enabled: boolean; email_verified: boolean; totp_setup_required: boolean;
   organization: { id: string; name: string; role: string; verified: boolean } | null;
 };
 

@@ -65,9 +65,10 @@ export default function Candidate() {
               <div><label className="label" htmlFor="skills">{t("Skills (comma separated)")}</label>
                 <textarea id="skills" name="skills" className="input" defaultValue={[...d.skills.map((s: any) => s.label), ...(d.raw_skills || [])].join(", ")} /></div>
               <p className="text-sm text-slate-600">{t("Experience")}: {Math.round((d.total_months || 0) / 12 * 10) / 10} {t("years")} · {t("Languages")}: {(d.languages || []).map((l: any) => t(LANGS[l.code] || l.code)).join(", ") || "—"}</p>
-              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="visible" defaultChecked={profile.visible_to_recruiters} className="mt-1" />
+              {!user.email_verified && <Alert kind="warning">{t("Confirm your e-mail address to become visible to recruiters or receive job alerts.")}</Alert>}
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="visible" defaultChecked={profile.visible_to_recruiters} disabled={!user.email_verified} className="mt-1" />
                 <span>{t("Let recruiters find my profile and invite me to apply (optional, you can change this at any time).")}</span></label>
-              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="alerts" defaultChecked={profile.alerts} className="mt-1" />
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="alerts" defaultChecked={profile.alerts} disabled={!user.email_verified} className="mt-1" />
                 <span>{t("Send me a weekly e-mail with new matching jobs.")}</span></label>
               <button className="btn-primary" disabled={busy}>{t("Save and validate")}</button>
             </form>

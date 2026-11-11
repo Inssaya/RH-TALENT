@@ -19,7 +19,7 @@ export default function Login() {
       const u = await api<User>("/auth/login", { method: "POST", json: { email: f.email, password: f.password, totp: f.totp || null } });
       await refresh();
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next && next.startsWith("/") && !next.startsWith("//") ? next
+      window.location.href = u.totp_setup_required ? "/security" : next && next.startsWith("/") && !next.startsWith("//") ? next
         : u.role === "recruiter" ? "/recruiter" : u.role === "platform_admin" ? "/admin" : "/candidate";
     } catch (err) {
       const d = String((err as ApiError).detail);
