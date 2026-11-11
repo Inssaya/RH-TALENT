@@ -13,8 +13,8 @@ Source of truth for requirements: `docs/TalentMatch_Cahier_des_Charges.pdf`.
 | `frontend/` Next.js pages and components | **Done (T1)** | `tsc` clean, `next build` OK, `frontend/scripts/check-i18n.py` finds no missing French key |
 | Docker, Caddy, compose, `.env.example`, backup/restore scripts | **Done (T3)** | Images built, stack up, `/api/ready` OK, `seed-demo` gives 30 jobs on the home page |
 | `e2e/smoke.mjs` six browser journeys | **Done (T4)** | 6/6 passed twice in a row against the compose stack |
-| CI (GitHub Actions) | **Not started** (T5) | |
-| README, runbook, compliance and evaluation docs | **Not started** | |
+| CI (`.github/workflows/ci.yml`) | **Written (T5), never run** | YAML parses; its backend steps (migrations from empty DB, `alembic check`, eval) were run locally; the `images`, `e2e`, `secrets` jobs cannot run here |
+| README, `docs/runbook.md`, `docs/compliance.md`, `docs/evaluation.md` | **Done (T6)** | Backup and restore procedure executed for real; other runbook procedures are marked untested |
 
 Local services used so far (not containers): PostgreSQL 16 (`talentmatch` / `talentmatch`, databases
 `talentmatch` and `talentmatch_test`), Redis on 6379. Backend venv: `backend/.venv`.
@@ -229,3 +229,14 @@ Run the full check once more (pytest, eval, frontend build, compose up, e2e), co
 - **Turnstile:** the API verifies a token when `TURNSTILE_SECRET` is set, but no widget exists in the apply form.
   Leave `TURNSTILE_SECRET` empty until the widget is added, otherwise every application is refused.
 - Postgres and Redis used by the backend tests (outside Docker) stop between sessions; the compose stack has its own.
+
+## 7. Final status (T7)
+
+Verified in the last session: ruff clean; 39 pytest tests; `eval` exit 0; `tsc`, French key coverage and `next build`;
+both images rebuilt; stack recreated from empty volumes; `seed-demo` gives 30 jobs; `e2e/smoke.mjs` 6/6;
+backup then destructive change then `restore.sh` returned the data and the audit chain stayed intact.
+Bug fixed on the way: `beat` was permanently "unhealthy" (the image healthcheck probes the API port).
+
+Not verified: the GitHub Actions run, the default image with Tesseract, any real LLM / SMTP / S3 / ClamAV / Sentry,
+real HTTPS with Let's Encrypt, runbook procedures 1 and 3 to 10, performance under load (the k6 load test of the
+specification was not written), accessibility audit (axe), and human review of FR/AR wording and legal texts.

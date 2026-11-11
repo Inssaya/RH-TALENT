@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: talentmatch
+          POSTGRES_PASSWORD: talentmatch
+          POSTGRES_DB: talentmatch_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U talentmatch" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://talentmatch:talentmatch@localhost:5432/talentmatch_test
+      DATABASE_URL: postgresql+psycopg://talentmatch:talentmatch@localhost:5432/talentmatch_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - run: pip install -e ".[dev,ocr]"
+      - name: Lint
+        run: ruff check app tests
+      - name: Tests
+        run: pytest -q
+      - name: Migrations apply on an empty database
+        run: |
+          psql "postgresql://talentmatch:talentmatch@localhost:5432/postgres" -c "CREATE DATABASE migration_check"
+          export DATABASE_URL=postgresql+psycopg://talentmatch:talentmatch@localhost:5432/migration_check
+          alembic upgrade head
+          alembic check   # fails if the models changed without a migration
+      - name: AI evaluation (must beat BM25 by 0.05 nDCG@10, counterfactual gap below 0.03)
+        run: python -m app.cli eval
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - name: Every translation key used in the UI exists in French
+        run: python3 scripts/check-i18n.py
+      - run: npm run build
+
+  images:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image (with Tesseract)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          load: true
+          tags: talentmatch-api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          load: true
+          tags: talentmatch-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      - name: Scan API image (fails on fixable HIGH or CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: talentmatch-api:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Scan web image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: talentmatch-web:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [images]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Start the stack
+        run: |
+          cat > .env <<EOF
+          DOMAIN=:80
+          PUBLIC_URL=http://localhost
+          SECRET_KEY=$(python3 -c "import secrets;print(secrets.token_urlsafe(64))")
+          POSTGRES_PASSWORD=$(openssl rand -hex 16)
+          ADMIN_EMAIL=admin@example.org
+          ADMIN_PASSWORD=ci-admin-password-2026
+          COOKIE_SECURE=false
+          CORS_ORIGINS=http://localhost
+          RATE_LIMIT_ENABLED=false
+          EOF
+          docker compose up -d --build
+          for i in $(seq 1 60); do curl -fsS localhost/api/ready && break; sleep 3; done
+      - name: Browser journeys
+        run: |
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+          BASE_URL=http://localhost ADMIN_EMAIL=admin@example.org ADMIN_PASSWORD=ci-admin-password-2026 node e2e/smoke.mjs
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 200
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
