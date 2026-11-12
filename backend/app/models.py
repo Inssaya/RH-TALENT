@@ -44,6 +44,7 @@ class User(Base):
     locale: Mapped[str] = mapped_column(String(5), default="fr")
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | suspended
     totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    totp_pending_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)  # not active until confirmed
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reset_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)

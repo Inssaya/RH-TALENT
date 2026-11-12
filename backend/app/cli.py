@@ -122,7 +122,7 @@ def reset_2fa(args):
         u = db.scalar(select(User).where(User.email == args.email.lower()))
         if not u:
             sys.exit(f"no user {args.email}")
-        u.totp_enabled, u.totp_secret = False, None
+        u.totp_enabled, u.totp_secret, u.totp_pending_secret = False, None, None
         db.commit()
     print(f"two-factor authentication reset for {args.email}")
 

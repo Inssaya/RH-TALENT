@@ -172,4 +172,7 @@ export const fr: Record<string, string> = {
   "Your e-mail address is confirmed.": "Votre adresse e-mail est confirmée.",
   "email_not_verified": "Confirmez d'abord votre adresse e-mail (lien envoyé à l'inscription).", "totp_setup_required": "Configurez l'authentification à deux facteurs pour continuer.",
   "Two-factor authentication is mandatory for your role": "L'authentification à deux facteurs est obligatoire pour votre rôle",
+  "Replace my authenticator": "Remplacer mon application d'authentification", "Current authentication code": "Code d'authentification actuel",
+  "The current authenticator keeps working until you confirm the new one.": "L'application actuelle continue de fonctionner tant que vous n'avez pas confirmé la nouvelle.",
+  "The current authentication code is required to replace the authenticator": "Le code d'authentification actuel est requis pour remplacer l'application d'authentification",
 };

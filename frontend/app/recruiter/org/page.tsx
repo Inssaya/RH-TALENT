@@ -44,7 +44,7 @@ export default function Org() {
           <div className="card space-y-3">
             <h2 className="h2">{t("Two-factor authentication")}</h2>
             <p className="muted">{t("Mandatory for organization administrators.")}</p>
-            {user.totp_enabled ? <Alert kind="success">{t("Two-factor authentication is active on your account.")}</Alert> : totp ? (
+            {user.totp_enabled ? <><Alert kind="success">{t("Two-factor authentication is active on your account.")}</Alert><a className="text-sm font-medium text-brand-700 underline" href="/security">{t("Replace my authenticator")}</a></> : totp ? (
               <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); run(() => api("/auth/totp/enable", { method: "POST", json: { code: new FormData(e.currentTarget).get("code") } }).then(() => { setTotp(null); return refresh(); }), "Two-factor authentication is active on your account."); }}>
                 <p className="text-sm">{t("Add this key to your authenticator app, then enter the 6-digit code.")}</p>
                 <code className="block break-all rounded bg-slate-100 p-2 text-sm">{totp.secret}</code>

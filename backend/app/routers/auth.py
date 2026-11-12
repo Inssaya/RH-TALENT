@@ -182,18 +182,24 @@ class TotpIn(BaseModel):
 
 
 @router.post("/auth/totp/setup")
-def totp_setup(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    user.totp_secret, user.totp_enabled = pyotp.random_base32(), False
-    return {"secret": user.totp_secret,
-            "uri": pyotp.TOTP(user.totp_secret).provisioning_uri(user.email, issuer_name="TalentMatch")}
+def totp_setup(body: TotpIn | None = None, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Start enrolment. The new secret stays *pending*: the active factor (if any) keeps working until the new
+    one is confirmed. Replacing an active factor needs a valid code from it, so a stolen session cookie alone
+    cannot swap the authenticator."""
+    if user.totp_enabled and not (body and user.totp_secret and pyotp.TOTP(user.totp_secret).verify(body.code, valid_window=1)):
+        raise HTTPException(403, "The current authentication code is required to replace the authenticator")
+    user.totp_pending_secret = pyotp.random_base32()
+    return {"secret": user.totp_pending_secret,
+            "uri": pyotp.TOTP(user.totp_pending_secret).provisioning_uri(user.email, issuer_name="TalentMatch")}
 
 
 @router.post("/auth/totp/enable")
 def totp_enable(body: TotpIn, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    if not user.totp_secret or not pyotp.TOTP(user.totp_secret).verify(body.code, valid_window=1):
+    if not user.totp_pending_secret or not pyotp.TOTP(user.totp_pending_secret).verify(body.code, valid_window=1):
         raise HTTPException(400, "Invalid code")
-    user.totp_enabled = True
-    audit.log(db, "auth.2fa_enabled", actor=user, ip=client_ip(request))
+    replaced = user.totp_enabled
+    user.totp_secret, user.totp_pending_secret, user.totp_enabled = user.totp_pending_secret, None, True
+    audit.log(db, "auth.2fa_replaced" if replaced else "auth.2fa_enabled", actor=user, ip=client_ip(request))
     return {"ok": True}
 
 
@@ -203,7 +209,7 @@ def totp_disable(body: LoginIn, request: Request, user: User = Depends(current_u
         raise HTTPException(401, "Invalid credentials")
     if totp_required(db, user):
         raise HTTPException(403, "Two-factor authentication is mandatory for your role")
-    user.totp_enabled, user.totp_secret = False, None
+    user.totp_enabled, user.totp_secret, user.totp_pending_secret = False, None, None
     audit.log(db, "auth.2fa_disabled", actor=user, ip=client_ip(request))
     return {"ok": True}
 

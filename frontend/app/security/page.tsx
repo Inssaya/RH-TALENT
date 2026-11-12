@@ -14,12 +14,25 @@ export default function Security() {
     if (user && !user.totp_enabled) api("/auth/totp/setup", { method: "POST" }).then(setSetup).catch((e: ApiError) => setError(String(e.detail)));
   }, [user]);
   if (!user) return <Spinner />;
-  if (user.totp_enabled) {
+  if (user.totp_enabled && !setup) {
+    // Replacing an active authenticator needs a code from the current one.
+    const replace = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault(); setError("");
+      try { setSetup(await api("/auth/totp/setup", { method: "POST", json: { code: new FormData(e.currentTarget).get("current") } })); }
+      catch (err) { setError(t(String((err as ApiError).detail))); }
+    };
     return (
       <div className="mx-auto max-w-md space-y-4">
         <h1 className="h1">{t("Two-factor authentication")}</h1>
         <Alert kind="success">{t("Two-factor authentication is active on your account.")}</Alert>
+        {error && <Alert>{error}</Alert>}
         <a className="btn-primary" href={user.role === "platform_admin" ? "/admin" : user.role === "recruiter" ? "/recruiter" : "/candidate"}>{t("Continue")}</a>
+        <form onSubmit={replace} className="card space-y-3">
+          <h2 className="h2">{t("Replace my authenticator")}</h2>
+          <label className="label" htmlFor="current">{t("Current authentication code")}</label>
+          <input id="current" name="current" required inputMode="numeric" autoComplete="one-time-code" className="input" placeholder="123456" />
+          <button className="btn-secondary">{t("Replace my authenticator")}</button>
+        </form>
       </div>
     );
   }
@@ -27,12 +40,14 @@ export default function Security() {
     e.preventDefault(); setError("");
     try {
       await api("/auth/totp/enable", { method: "POST", json: { code: new FormData(e.currentTarget).get("code") } });
+      setSetup(null);
       await refresh();
     } catch (err) { setError(t(String((err as ApiError).detail))); }
   };
   return (
     <div className="mx-auto max-w-md space-y-4">
       <h1 className="h1">{t("Set up two-factor authentication")}</h1>
+      {user.totp_enabled && <Alert kind="info">{t("The current authenticator keeps working until you confirm the new one.")}</Alert>}
       {user.totp_setup_required && <Alert kind="warning">{t("Mandatory for organization administrators.")} {t("Your account stays locked until you finish this step.")}</Alert>}
       {error && <Alert>{error}</Alert>}
       {!setup ? <Spinner /> : (

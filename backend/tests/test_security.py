@@ -202,3 +202,32 @@ def test_promoting_a_member_to_admin_requires_two_factor_from_then_on():
     r = invited.get("/api/jobs")
     assert r.status_code == 403 and r.json()["detail"] == "totp_setup_required"
     assert invited.get("/api/auth/me").json()["email_verified"] is True  # invitation link proved the address
+
+
+# ---------------------------------------------------------------- replacing the second factor
+def test_replacing_the_authenticator_needs_the_current_code_and_stays_pending_until_confirmed():
+    email = f"rep-{u()}@tfa.example.org"
+    c = TestClient(app)
+    old = register(c, email, org="Rep Org")["totp_secret"]
+
+    # a session cookie alone cannot start a replacement
+    assert c.post("/api/auth/totp/setup").status_code == 403
+    assert c.post("/api/auth/totp/setup", json={"code": "000000"}).status_code == 403
+    login = {"email": email, "password": PASSWORD, "totp": pyotp.TOTP(old).now()}
+    assert TestClient(app).post("/api/auth/login", json=login).status_code == 200  # old factor untouched
+
+    # with the current code, a new secret is issued but is not active yet
+    r = c.post("/api/auth/totp/setup", json={"code": pyotp.TOTP(old).now()})
+    assert r.status_code == 200
+    new = r.json()["secret"]
+    assert new != old
+    assert TestClient(app).post("/api/auth/login", json=login).status_code == 200  # old code still logs in
+    assert TestClient(app).post("/api/auth/login", json={**login, "totp": pyotp.TOTP(new).now()}).status_code == 401
+
+    # confirming with a code from the OLD secret does not activate it; the new one does
+    assert c.post("/api/auth/totp/enable", json={"code": pyotp.TOTP(old).now()}).status_code == 400
+    assert c.post("/api/auth/totp/enable", json={"code": pyotp.TOTP(new).now()}).status_code == 200
+    assert TestClient(app).post("/api/auth/login", json={**login, "totp": pyotp.TOTP(old).now()}).status_code == 401
+    assert TestClient(app).post("/api/auth/login", json={**login, "totp": pyotp.TOTP(new).now()}).status_code == 200
+    # nothing pending any more: enable without a new setup is refused
+    assert c.post("/api/auth/totp/enable", json={"code": pyotp.TOTP(new).now()}).status_code == 400
