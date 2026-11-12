@@ -339,3 +339,50 @@ def test_a_session_issued_before_this_feature_without_a_version_claim_still_work
     assert old.get("/api/auth/me").status_code == 200
     assert c.post("/api/auth/password", json={"current_password": PASSWORD, "new_password": "a-very-new-password"}).status_code == 200
     assert old.get("/api/auth/me").status_code == 401
+
+
+# ---------------------------------------------------------------- lost tracking links
+def test_lost_tracking_links_are_only_ever_mailed_to_the_address_on_file():
+    from .conftest import apply
+    rec = TestClient(app)
+    register(rec, f"trk-{u()}@pw.example.org", org="Track Org")
+    j1, j2 = published_job(rec), published_job(rec)
+    known, unknown = f"lost-{u()}@example.com", f"nobody-{u()}@example.com"
+    apply(rec, j1["slug"], CV_LINA, known, "Lost Person")
+    apply(rec, j2["slug"], CV_LINA, known, "Lost Person")
+    anon = TestClient(app)
+    mails = lambda to: [m for m in emailer.outbox if m["to"] == to and "liens de suivi" in m["subject"]]  # noqa: E731
+
+    r_known = anon.post("/api/public/track/resend", json={"email": known})
+    r_unknown = anon.post("/api/public/track/resend", json={"email": unknown})
+    # the caller cannot tell the two cases apart
+    assert (r_known.status_code, r_known.json()) == (r_unknown.status_code, r_unknown.json()) == (200, {"ok": True})
+    assert len(mails(known)) == 1 and mails(unknown) == []
+    assert all(m["to"] in (known, unknown) for m in emailer.outbox[-3:])
+    links = re.findall(r"/track/([\w.-]+)", mails(known)[0]["body"])
+    assert len(set(links)) == 2
+    for token in set(links):
+        assert anon.get(f"/api/public/track/{token}").status_code == 200   # the mailed links work
+    assert anon.post("/api/public/track/resend", json={"email": "not-an-email"}).status_code == 422
+
+
+def test_resending_tracking_links_is_limited_per_address_without_revealing_it():
+    from app.config import get_settings
+
+    from .conftest import apply
+    rec = TestClient(app)
+    register(rec, f"trk2-{u()}@pw.example.org", org="Track Org 2")
+    job = published_job(rec)
+    email = f"spam-{u()}@example.com"
+    apply(rec, job["slug"], CV_LINA, email, "Spam Target")
+    settings = get_settings()
+    settings.rate_limit_enabled = True
+    try:
+        anon = TestClient(app)
+        ip = {"X-Forwarded-For": f"10.{uuid.uuid4().int % 250}.{uuid.uuid4().int % 250}.{uuid.uuid4().int % 250}"}  # own counter:
+        # the per-IP limit lives in Redis and survives between test runs
+        codes = [anon.post("/api/public/track/resend", json={"email": email}, headers=ip).status_code for _ in range(5)]
+    finally:
+        settings.rate_limit_enabled = False
+    assert codes == [200] * 5                                                    # same answer every time
+    assert len([m for m in emailer.outbox if m["to"] == email and "liens de suivi" in m["subject"]]) == 3

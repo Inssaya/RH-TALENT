@@ -1,6 +1,7 @@
 """Public API: job board, account-less application, tracking by magic link."""
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import Text, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -9,7 +10,7 @@ from ..config import get_settings
 from ..db import get_db
 from ..deps import current_user_optional
 from ..models import Applicant, Application, Job, JobVersion, Organization, User, now
-from ..ratelimit import client_ip, hit
+from ..ratelimit import client_ip, hit, limiter
 from ..services import (
     FINAL,
     application_by_token,
@@ -177,6 +178,32 @@ def tracking_view(app: Application) -> dict:
             "decided_by": "human",
         }
     return out
+
+
+class ResendIn(BaseModel):
+    email: EmailStr
+
+
+@router.post("/track/resend", dependencies=[Depends(limiter("track-resend", 10, 3600))])
+def resend_tracking_links(body: ResendIn, db: Session = Depends(get_db)):
+    """Account-less candidates who lost their link. The answer is always the same, whether or not the address
+    has applications, so this cannot be used to find out who applied where; the links only ever go to the address
+    on file. At most 3 mails per hour per address."""
+    email = body.email.strip().lower()
+    reply = {"ok": True}
+    if not hit(f"track-resend:{email}", 3, 3600):
+        return reply
+    apps = db.scalars(select(Application).join(Applicant).where(Applicant.email == email, Applicant.user_id.is_(None))
+                      .order_by(Application.submitted_at.desc()).limit(20)).all()
+    if not apps:
+        return reply
+    base = get_settings().public_url
+    lines = "\n".join(f"- {a.job.title} ({a.job.organization.name}): {base}/track/{issue_magic_link(a)}" for a in apps)
+    emailer.send(email, "TalentMatch : vos liens de suivi / your tracking links",
+                 f"Bonjour,\n\nVoici les liens pour suivre vos candidatures (valables {get_settings().magic_link_days} jours) :\n{lines}\n\n"
+                 f"Hello,\n\nHere are the links to follow your applications (valid {get_settings().magic_link_days} days):\n{lines}\n\n"
+                 "Si vous n'avez rien demandé, ignorez ce message. / If you did not ask for this, ignore this message.\n\nTalentMatch")
+    return reply
 
 
 @router.get("/track/{token}")

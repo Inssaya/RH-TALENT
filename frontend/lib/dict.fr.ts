@@ -180,4 +180,6 @@ export const fr: Record<string, string> = {
   "New password (10 characters minimum)": "Nouveau mot de passe (10 caractères minimum)",
   "Password changed. Your other sessions were signed out.": "Mot de passe modifié. Vos autres sessions ont été déconnectées.",
   "The new password must be different from the current one": "Le nouveau mot de passe doit être différent de l'actuel",
+  "I lost my tracking link": "J'ai perdu mon lien de suivi", "If this address has applications, an e-mail with the links has been sent.": "Si cette adresse a des candidatures, un e-mail avec les liens a été envoyé.",
+  "Enter the e-mail address you applied with. We only ever send the links to that address.": "Saisissez l'adresse e-mail avec laquelle vous avez postulé. Les liens ne sont jamais envoyés qu'à cette adresse.", "Send me my links": "M'envoyer mes liens",
 };

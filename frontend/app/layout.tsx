@@ -31,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/how-ai-works" className="hover:underline">{t("How the AI works")}</Link>
               <Link href="/legal/privacy" className="hover:underline">{t("Privacy and your rights")}</Link>
               <Link href="/help" className="hover:underline">{t("Help")}</Link>
+              <Link href="/track" className="hover:underline">{t("I lost my tracking link")}</Link>
             </div>
           </footer>
         </Providers>

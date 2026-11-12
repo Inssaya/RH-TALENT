@@ -41,6 +41,7 @@ export default function Login() {
           <Link href="/forgot" className="text-brand-700 hover:underline">{t("Forgot password?")}</Link>
           <Link href="/register" className="text-brand-700 hover:underline">{t("Create an account")}</Link>
         </div>
+        <p className="text-sm"><Link href="/track" className="text-brand-700 hover:underline">{t("I lost my tracking link")}</Link></p>
       </form>
     </div>
   );
