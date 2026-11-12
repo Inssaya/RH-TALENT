@@ -69,9 +69,11 @@ Behaviour built in: 3 exponential retries, then **rule-based mode** for extracti
 
 ## 7. Rotating a compromised secret (untested)
 
+- **A user's sessions** (suspected account takeover): have them reset their password ("Forgot password?") or change it in *Account*;
+  both sign out every session issued before. Applies to all roles.
 - **`SECRET_KEY`**: sessions and every candidate tracking link are signed with it. Rotating logs everyone out and
   **invalidates all tracking links**. Candidates with an account keep access by logging in again; account-less
-  candidates lose their link and there is no "resend link" feature yet (known gap). Edit `.env`, `docker compose up -d`.
+  candidates lose their link but can request new ones at `/track`. Edit `.env`, `docker compose up -d`.
   Do this on a confirmed leak.
 - **`POSTGRES_PASSWORD`**: `docker compose exec db psql -U talentmatch -c "ALTER USER talentmatch PASSWORD '…'"`, update `.env`,
   `docker compose up -d`.

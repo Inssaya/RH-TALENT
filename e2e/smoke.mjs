@@ -202,7 +202,31 @@ await journey("4. Candidate registers, uploads a CV, gets recommendations, appli
   await cand.getByText(/Candidature reçue/).waitFor();
   await cand.goto("/candidate");
   await cand.getByText("Data Scientist").first().waitFor();
+  // account screen: change the password; the caller stays signed in
+  await cand.goto("/account");
+  await cand.getByLabel("Mot de passe actuel").fill(PASSWORD);
+  await cand.getByLabel("Nouveau mot de passe (10 caractères minimum)").fill("another-long-password-2026");
+  await cand.getByRole("button", { name: "Changer mon mot de passe" }).click();
+  await cand.getByText("Mot de passe modifié.").waitFor();
+  await cand.goto("/candidate");
+  await cand.getByRole("heading", { name: "Mon espace" }).waitFor();
   await cand.context().close();
+});
+
+await journey("4b. Visitor who lost the tracking link gets the same answer for any address", async () => {
+  const v = await newPage();
+  await v.goto("/track");
+  await v.getByLabel("E-mail").fill(`lina-${run}@e2e.example.org`);
+  await v.getByRole("button", { name: "M'envoyer mes liens" }).click();
+  await v.getByText(/Si cette adresse a des candidatures/).waitFor();
+  await v.goto("/track");
+  await v.getByLabel("E-mail").fill(`nobody-${run}@e2e.example.org`);
+  await v.getByRole("button", { name: "M'envoyer mes liens" }).click();
+  await v.getByText(/Si cette adresse a des candidatures/).waitFor();
+  const logs = execSync(process.env.E2E_MAIL_CMD || "docker compose logs --no-color --tail 800 api worker", { encoding: "utf8", maxBuffer: 20_000_000 });
+  assert.ok(logs.includes(`to=lina-${run}@e2e.example.org subject=TalentMatch : vos liens de suivi`), "the address on file received the e-mail");
+  assert.ok(!logs.includes(`to=nobody-${run}@e2e.example.org`), "an unknown address received nothing");
+  await v.context().close();
 });
 
 await journey("5. Platform admin opens every tab and verifies the audit chain", async () => {

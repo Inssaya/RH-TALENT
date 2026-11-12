@@ -93,7 +93,7 @@ All settings are environment variables (`backend/app/config.py`, documented in `
 
 ## Tests and quality gates
 
-- Backend: 49 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
+- Backend: 58 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
   cases, identity-neutrality, injection and hidden-text handling).
 - `python -m app.cli eval` fails if the ranking does not beat a BM25 baseline by 0.05 nDCG@10 or if the
   counterfactual score gap reaches 0.03. **These numbers come from synthetic data** (see `docs/evaluation.md`).
@@ -116,11 +116,11 @@ Be aware of these before using the platform with real candidates.
 - The built-in skill taxonomy has about 135 entries. Import the full ESCO export with `python -m app.cli import-esco`.
 - Arabic UI covers the public, authentication, candidate and tracking screens; recruiter and admin screens fall
   back to English. French and Arabic wording has not been reviewed by native speakers.
-- E-mail verification (signed 7-day link) gates one-click apply, recruiter visibility and job alerts only. Unverified
-  users can still browse, apply as a visitor, and (employers) create and publish jobs; an account never inherits earlier
-  account-less applications made with the same address. Two-factor is mandatory for organization admins and platform
-  admins, optional for other roles. There is no change-password screen (only the reset-link flow) and no "resend
-  tracking link" feature for account-less candidates.
+- E-mail verification (signed 7-day link) gates one-click apply, recruiter visibility, job alerts, talent invitations
+  and publishing a job (employers can still save drafts). An account never inherits earlier account-less applications
+  made with the same address. Two-factor is mandatory for organization admins and platform admins (replacing it needs
+  a code from the current authenticator), optional for other roles. Changing or resetting a password signs out every
+  other session. Account-less candidates can request their tracking links again at `/track` (same answer for any address).
 - Captcha: the API can verify Cloudflare Turnstile, but the apply form has no widget. Keep `TURNSTILE_SECRET` empty.
 - ClamAV, S3, SMTP, Sentry and bge-m3 are wired but were not exercised against real services.
 - Backups are logical dumps (`scripts/backup.sh`). The specification's 15-minute RPO needs continuous WAL archiving

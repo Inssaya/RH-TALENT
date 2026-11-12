@@ -316,3 +316,19 @@ address is unknown.
 3. Configure SMTP (Brevo or other) and send yourself each e-mail type.
 4. Collect and annotate the human evaluation set (specification section XI) with a recruiter.
 5. Have the privacy notice, employer terms and DPIA reviewed by a lawyer; fill the bracketed items.
+
+## 10. Status of section 9 (S1 to S5)
+
+Done, one commit each, every new test proven to fail without its fix (the fix was removed temporarily and the test
+failed): S1 `8c4ed66` pending TOTP secret and current code needed to replace it (migration 0003); S2 invite endpoint
+checks the verified address; S3 publishing needs a verified address; S4 password change and session invalidation
+via a password-version claim (migration 0004); S5 `/api/public/track/resend`. Backend 58 tests; E2E 7/7 on a
+fresh stack in both admin paths (first-run enrolment, later-run code).
+
+Test-suite note: the per-IP limiter keeps counters in Redis across runs. A test that turns rate limiting on must use
+its own `X-Forwarded-For` value (see `test_resending_tracking_links_is_limited_per_address_without_revealing_it`).
+One existing test was changed for intended behaviour: after a password reset the old session is now dead, so
+`test_password_reset_proves_ownership_of_the_address` logs in again before checking the verified flag.
+
+Remaining: S6 (Arabic for recruiter/admin screens), S7 (captcha widget), S8 (axe accessibility in the E2E), plus the
+owner-only items listed in section 9.
