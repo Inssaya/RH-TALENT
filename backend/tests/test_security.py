@@ -131,7 +131,7 @@ def test_password_reset_proves_ownership_of_the_address():
 def test_organization_admin_is_locked_out_of_everything_until_two_factor_is_enrolled():
     email = f"adm-{u()}@tfa.example.org"
     c = TestClient(app)
-    me = register(c, email, org="Tfa Org", enroll=False)
+    me = register(c, email, org="Tfa Org", enroll=False, verify=False)
     assert me["totp_setup_required"] is True and me["organization"]["role"] == "org_admin"
     for method, path in [("get", "/api/jobs"), ("post", "/api/jobs"), ("get", "/api/org"), ("get", "/api/org/analytics"),
                          ("get", "/api/org/members")]:
@@ -252,3 +252,17 @@ def test_inviting_a_talent_never_emails_an_unverified_address():
         db.get(User, uid).email_verified_at = db.get(User, uid).created_at
         db.commit()
     assert rec.post(f"/api/jobs/{job['id']}/talents/{pid}/invite").status_code == 200 and sent() == 1
+
+
+def test_unverified_employer_can_draft_but_not_publish():
+    email = f"pub-{u()}@tfa.example.org"
+    c = TestClient(app)
+    register(c, email, org="Pub Org", verify=False)
+    job = c.post("/api/jobs", json=JOB)
+    assert job.status_code == 200                                    # drafts are allowed
+    r = c.post(f"/api/jobs/{job.json()['id']}/publish")
+    assert r.status_code == 403 and r.json()["detail"] == "email_not_verified"
+    assert TestClient(app).get(f"/api/public/jobs/{job.json()['slug']}").status_code == 404   # nothing went public
+    verify_email(c, email)
+    assert c.post(f"/api/jobs/{job.json()['id']}/publish").status_code == 200
+    assert TestClient(app).get(f"/api/public/jobs/{job.json()['slug']}").status_code == 200

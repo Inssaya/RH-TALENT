@@ -100,8 +100,9 @@ def enroll_totp(client) -> str:
     return secret
 
 
-def register(client, email, role="recruiter", org="Acme Logistics", enroll=True):
-    """Register and log in. Organization admins must have 2FA to use the API, so enrol it by default."""
+def register(client, email, role="recruiter", org="Acme Logistics", enroll=True, verify=True):
+    """Register and log in. Organization admins must have 2FA to use the API, so enrol it by default, and
+    employers confirm their address by default because publishing a job requires it. Candidates stay unverified."""
     r = client.post("/api/auth/register", json={
         "email": email, "password": PASSWORD, "full_name": email.split("@")[0].title(),
         "role": role, "organization_name": org if role == "recruiter" else None, "accept_terms": True})
@@ -109,6 +110,8 @@ def register(client, email, role="recruiter", org="Acme Logistics", enroll=True)
     out = r.json()
     if role == "recruiter" and enroll:
         out["totp_secret"] = enroll_totp(client)
+    if role == "recruiter" and verify:
+        verify_email(client, email)
     return out
 
 

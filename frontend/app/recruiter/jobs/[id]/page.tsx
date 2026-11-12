@@ -115,7 +115,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
         <div className="flex flex-wrap items-center gap-2">
           <StatusChip status={job.status} />
           {job.status === "published" && <Link className="btn-secondary" href={`/jobs/${job.slug}`} target="_blank">{t("Public page")} ↗</Link>}
-          {job.status === "draft" && <button className="btn-primary" onClick={() => act(() => api(`/jobs/${id}/publish`, { method: "POST" }), "Job published.")}>{t("Publish")}</button>}
+          {job.status === "draft" && <button className="btn-primary" disabled={!user.email_verified} onClick={() => act(() => api(`/jobs/${id}/publish`, { method: "POST" }), "Job published.")}>{t("Publish")}</button>}
           {job.status === "published" && <button className="btn-secondary" onClick={() => window.confirm(t("Close this job? It will no longer accept applications.")) && act(() => api(`/jobs/${id}/close`, { method: "POST" }))}>{t("Close")}</button>}
         </div>
       </div>
@@ -127,6 +127,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
       </div>
       {error && <Alert>{error}</Alert>}
       {info && <Alert kind="success">{info}</Alert>}
+      {job.status === "draft" && !user.email_verified && <Alert kind="warning">{t("Confirm your e-mail address to publish a job. Drafts are always allowed.")}</Alert>}
 
       {tab === "shortlist" && (
         <div className="space-y-4">

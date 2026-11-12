@@ -178,6 +178,9 @@ def update_job(job_id: str, draft: JobDraft, request: Request, ctx: OrgContext =
 @router.post("/jobs/{job_id}/publish")
 def publish(job_id: str, request: Request, ctx: OrgContext = Depends(org_context), db: Session = Depends(get_db)):
     job = get_job(db, ctx, job_id)
+    # A public job from an unconfirmed address is the cheapest way to post a fraudulent offer. Drafts stay allowed.
+    if ctx.user.email_verified_at is None:
+        raise HTTPException(403, "email_not_verified")
     v = current_version(db, job)
     report = jobs_ai.quality_report(v.draft)
     if not report["publishable"]:

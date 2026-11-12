@@ -136,7 +136,8 @@ export default function NewJob() {
             <QualityReport quality={quality} />
           </div>
           <div className="card space-y-2">
-            <button className="btn-primary w-full" onClick={() => save(true)} disabled={busy}>{t("Publish")}</button>
+            <button className="btn-primary w-full" onClick={() => save(true)} disabled={busy || !user.email_verified}>{t("Publish")}</button>
+            {!user.email_verified && <Alert kind="warning">{t("Confirm your e-mail address to publish a job. Drafts are always allowed.")}</Alert>}
             <button className="btn-secondary w-full" onClick={() => save(false)} disabled={busy}>{t("Save as draft")}</button>
           </div>
         </aside>

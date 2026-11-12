@@ -113,6 +113,9 @@ await journey("1. Employer registers, creates a job from pasted text, publishes 
   await recruiter.getByRole("button", { name: "Créer mon compte" }).click();
   // An organization admin is locked to the two-factor setup page until it is done.
   await enrolTotp(recruiter);
+  // Publishing needs a confirmed address: follow the link from the e-mail.
+  await recruiter.goto(`/verify?token=${verificationToken(`samira-${run}@e2e.example.org`)}`);
+  await recruiter.getByText("Votre adresse e-mail est confirmée.").waitFor();
   await recruiter.goto("/recruiter");
   await recruiter.getByRole("link", { name: "+ Nouvelle offre" }).waitFor();
   await recruiter.getByRole("link", { name: "+ Nouvelle offre" }).click();

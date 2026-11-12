@@ -175,4 +175,5 @@ export const fr: Record<string, string> = {
   "Replace my authenticator": "Remplacer mon application d'authentification", "Current authentication code": "Code d'authentification actuel",
   "The current authenticator keeps working until you confirm the new one.": "L'application actuelle continue de fonctionner tant que vous n'avez pas confirmé la nouvelle.",
   "The current authentication code is required to replace the authenticator": "Le code d'authentification actuel est requis pour remplacer l'application d'authentification",
+  "Confirm your e-mail address to publish a job. Drafts are always allowed.": "Confirmez votre adresse e-mail pour publier une offre. Les brouillons sont toujours autorisés.",
 };
