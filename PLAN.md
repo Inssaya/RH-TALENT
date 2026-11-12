@@ -256,3 +256,63 @@ verification links from the API logs (`docker compose logs`, or `E2E_MAIL_CMD`) 
 first run on a stack, pass `ADMIN_TOTP_SECRET` (printed by the run).
 
 Known remaining: unverified employers can still create and publish jobs; no change-password screen; no resend-tracking-link.
+
+## 9. Architect review of section 8, and next work package
+
+Review result: the 49 tests pass and the gates hold against path tricks. Two defects were confirmed by probe and
+three design gaps remain. Execute S1 to S5 in order, one commit each, same rules as section 5. Every item needs a
+test that fails without the fix (check it by temporarily removing the fix).
+
+### S1. A session alone must not be able to replace the second factor  (defect, confirmed)
+
+Today `POST /api/auth/totp/setup` on an account that already has 2FA overwrites the secret and lets the caller enrol a
+new authenticator with nothing but the session cookie. Required behaviour:
+- If `totp_enabled` is true, `setup` requires a body `{"code": "<current TOTP code>"}`; without a valid code: 403 and
+  nothing changes.
+- The new secret must not replace the active one until it is confirmed: store it in a new column
+  `totp_pending_secret` (migration `0003`); `enable` verifies the code against the pending secret, then swaps.
+  Until then the old factor keeps working at login.
+- Audit events `auth.2fa_replaced`. Frontend: `/security` and the organization page ask for the current code when
+  replacing. Accept: probe "re-setup with session only" returns 403 and the old code still logs in.
+
+### S2. Never e-mail an unverified address on a recruiter's action  (defect, confirmed)
+
+`POST /api/jobs/{id}/talents/{profile_id}/invite` only checks `visible_to_recruiters`. Add the `email_verified_at`
+check (404 otherwise), the same condition as `suggest_talents`. Accept: inviting an unverified profile whose row is
+flagged visible returns 404 and sends nothing.
+
+### S3. Unverified employers cannot publish  (design gap)
+
+Publishing a public job from an unconfirmed address is the cheapest fraud path. `POST /api/jobs/{id}/publish` requires
+a verified e-mail (403 `email_not_verified`); drafts stay allowed. The job page shows the reason next to the Publish
+button. Update the E2E journey 1 to follow the employer's verification link (helper `verificationToken` exists).
+
+### S4. Passwords: change screen and session invalidation  (design gap)
+
+- `POST /api/auth/password` (current password + new password, 2FA code if enabled). Page `/account` linked from the header.
+- Sessions are stateless JWTs and survive a password change today. Add `password_changed_at` on `User` (same
+  migration as S1 is fine); put `iat` in the session token; `current_user_optional` rejects tokens issued before
+  `password_changed_at`. Reset and change both set it, and the caller of `change` gets a fresh cookie.
+- Accept: after a reset or a change, a session cookie captured before is refused (401) and the new one works.
+
+### S5. Account-less candidates can get their tracking link again  (design gap)
+
+`POST /api/public/track/resend {email}`: always answers 200 (no account enumeration); if anonymous applications
+exist for that address, sends one e-mail listing their tracking links (re-derived with `issue_magic_link`, which
+extends the expiry). Limits: 3 per hour per IP and per address. Small form on `/track` without token ("I lost my
+link"). Accept: test proves the mail is sent only to the address on file, and the response is identical when the
+address is unknown.
+
+### Then (lower priority, separate sessions)
+
+- S6. Arabic for recruiter and admin screens (`dict.ar.ts`); extend `check-i18n.py` with `--locale ar` as a warning list.
+- S7. Cloudflare Turnstile widget in the apply and sign-up forms, enabled only when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set.
+- S8. Accessibility: run axe-core in `e2e/smoke.mjs` on the public, apply, tracking and login pages; 0 critical violations.
+
+### Only the project owner can do these (no agent can)
+
+1. Push the branch through GitHub Actions once (open a pull request) and send back the failing job logs, if any.
+2. Get a Mistral API key, run `python -m app.cli eval --data <small set>` and three real applications with the key set.
+3. Configure SMTP (Brevo or other) and send yourself each e-mail type.
+4. Collect and annotate the human evaluation set (specification section XI) with a recruiter.
+5. Have the privacy notice, employer terms and DPIA reviewed by a lawyer; fill the bracketed items.
