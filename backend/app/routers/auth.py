@@ -32,7 +32,7 @@ router = APIRouter(tags=["auth"])
 
 def _set_cookie(response: Response, user: User) -> None:
     s = get_settings()
-    response.set_cookie(COOKIE, create_session(user.id), max_age=s.session_minutes * 60, httponly=True,
+    response.set_cookie(COOKIE, create_session(user), max_age=s.session_minutes * 60, httponly=True,
                         secure=s.cookie_secure, samesite="lax", path="/")
 
 
@@ -171,9 +171,38 @@ def reset(body: ResetIn, request: Request, db: Session = Depends(get_db)):
     if not user or not user.reset_expires_at or user.reset_expires_at < now():
         raise HTTPException(400, "Invalid or expired link")
     user.password_hash, user.reset_token_hash, user.reset_expires_at = hash_password(body.password), None, None
+    user.password_changed_at = now()  # signs out every existing session
     if user.email_verified_at is None:  # the reset link was delivered to this address: ownership is proven
         user.email_verified_at = now()
     audit.log(db, "auth.password_reset", actor=user, ip=client_ip(request))
+    return {"ok": True}
+
+
+class PasswordChangeIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=10, max_length=128)
+    totp: str | None = None
+
+
+@router.post("/auth/password")
+def change_password(body: PasswordChangeIn, request: Request, response: Response, user: User = Depends(current_user),
+                    db: Session = Depends(get_db)):
+    """Change the password. Needs the current password (and a 2FA code when enabled). Every other session is
+    signed out; the caller receives a fresh cookie."""
+    if not hit(f"pwchange:{user.id}", 5, 900):
+        raise HTTPException(429, "Too many attempts, retry in 15 minutes")
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(401, "Invalid credentials")
+    if user.totp_enabled:
+        if not body.totp:
+            raise HTTPException(401, "totp_required")
+        if not pyotp.TOTP(user.totp_secret).verify(body.totp, valid_window=1):
+            raise HTTPException(401, "Invalid code")
+    if body.new_password == body.current_password:
+        raise HTTPException(422, "The new password must be different from the current one")
+    user.password_hash, user.password_changed_at = hash_password(body.new_password), now()
+    audit.log(db, "auth.password_changed", actor=user, ip=client_ip(request))
+    _set_cookie(response, user)
     return {"ok": True}
 
 

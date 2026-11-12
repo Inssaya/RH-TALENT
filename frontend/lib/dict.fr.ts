@@ -176,4 +176,8 @@ export const fr: Record<string, string> = {
   "The current authenticator keeps working until you confirm the new one.": "L'application actuelle continue de fonctionner tant que vous n'avez pas confirmé la nouvelle.",
   "The current authentication code is required to replace the authenticator": "Le code d'authentification actuel est requis pour remplacer l'application d'authentification",
   "Confirm your e-mail address to publish a job. Drafts are always allowed.": "Confirmez votre adresse e-mail pour publier une offre. Les brouillons sont toujours autorisés.",
+  "Account": "Compte", "My account": "Mon compte", "Change my password": "Changer mon mot de passe", "Current password": "Mot de passe actuel",
+  "New password (10 characters minimum)": "Nouveau mot de passe (10 caractères minimum)",
+  "Password changed. Your other sessions were signed out.": "Mot de passe modifié. Vos autres sessions ont été déconnectées.",
+  "The new password must be different from the current one": "Le nouveau mot de passe doit être différent de l'actuel",
 };

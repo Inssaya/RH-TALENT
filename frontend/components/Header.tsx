@@ -28,6 +28,7 @@ export default function Header() {
           {user === undefined ? null : user ? (
             <>
               <Link href={home} className="hidden font-medium sm:inline">{user.full_name}</Link>
+              <Link href="/account" className="hover:text-brand-700">{t("Account")}</Link>
               <button className="btn-secondary" onClick={logout}>{t("Sign out")}</button>
             </>
           ) : (

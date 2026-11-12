@@ -1,5 +1,6 @@
 """E-mail verification and mandatory two-factor authentication."""
 import re
+import time
 import uuid
 
 import pyotp
@@ -124,7 +125,10 @@ def test_password_reset_proves_ownership_of_the_address():
     assert c.post("/api/auth/forgot", json={"email": email}).status_code == 200
     token = re.search(r"token=([\w-]+)", [m for m in emailer.outbox if m["to"] == email and "reset" in m["body"]][-1]["body"]).group(1)
     assert TestClient(app).post("/api/auth/reset", json={"token": token, "password": "another-long-password"}).status_code == 200
-    assert c.get("/api/auth/me").json()["email_verified"] is True
+    assert c.get("/api/auth/me").status_code == 401  # the reset signed the old session out
+    again = TestClient(app)
+    assert again.post("/api/auth/login", json={"email": email, "password": "another-long-password"}).status_code == 200
+    assert again.get("/api/auth/me").json()["email_verified"] is True
 
 
 # ---------------------------------------------------------------- mandatory two-factor
@@ -266,3 +270,72 @@ def test_unverified_employer_can_draft_but_not_publish():
     verify_email(c, email)
     assert c.post(f"/api/jobs/{job.json()['id']}/publish").status_code == 200
     assert TestClient(app).get(f"/api/public/jobs/{job.json()['slug']}").status_code == 200
+
+
+# ---------------------------------------------------------------- passwords and sessions
+def _clone_session(client):
+    """A second client holding the same session cookie, like a stolen or forgotten browser."""
+    other = TestClient(app)
+    for cookie in client.cookies.jar:
+        other.cookies.set(cookie.name, cookie.value)
+    return other
+
+
+def test_password_change_signs_out_other_sessions_and_keeps_the_caller_signed_in():
+    email = f"chg-{u()}@pw.example.org"
+    c = TestClient(app)
+    register(c, email, role="candidate")
+    old_session = _clone_session(c)
+    assert old_session.get("/api/auth/me").status_code == 200
+
+    # wrong current password, same password, too short: nothing changes
+    assert c.post("/api/auth/password", json={"current_password": "nope-nope-nope", "new_password": "a-very-new-password"}).status_code == 401
+    assert c.post("/api/auth/password", json={"current_password": PASSWORD, "new_password": PASSWORD}).status_code == 422
+    assert c.post("/api/auth/password", json={"current_password": PASSWORD, "new_password": "short"}).status_code == 422
+    assert old_session.get("/api/auth/me").status_code == 200
+
+    assert c.post("/api/auth/password", json={"current_password": PASSWORD, "new_password": "a-very-new-password"}).status_code == 200
+    assert old_session.get("/api/auth/me").status_code == 401        # stolen or forgotten session is dead
+    assert c.get("/api/auth/me").status_code == 200                   # caller got a fresh cookie
+    assert TestClient(app).post("/api/auth/login", json={"email": email, "password": PASSWORD}).status_code == 401
+    assert TestClient(app).post("/api/auth/login", json={"email": email, "password": "a-very-new-password"}).status_code == 200
+    assert TestClient(app).post("/api/auth/password", json={"current_password": "x", "new_password": "y" * 12}).status_code == 401
+
+
+def test_password_change_asks_for_a_second_factor_code_when_enabled():
+    email = f"chg2-{u()}@pw.example.org"
+    c = TestClient(app)
+    secret = register(c, email, org="Pw Org")["totp_secret"]
+    body = {"current_password": PASSWORD, "new_password": "a-very-new-password"}
+    r = c.post("/api/auth/password", json=body)
+    assert r.status_code == 401 and r.json()["detail"] == "totp_required"
+    assert c.post("/api/auth/password", json={**body, "totp": "000000"}).status_code == 401
+    assert c.post("/api/auth/password", json={**body, "totp": pyotp.TOTP(secret).now()}).status_code == 200
+
+
+def test_password_reset_also_signs_out_every_existing_session():
+    email = f"rst-{u()}@pw.example.org"
+    c = TestClient(app)
+    register(c, email, role="candidate")
+    stolen = _clone_session(c)
+    assert c.post("/api/auth/forgot", json={"email": email}).status_code == 200
+    token = re.search(r"token=([\w-]+)", [m for m in emailer.outbox if m["to"] == email and "reset" in m["body"]][-1]["body"]).group(1)
+    assert TestClient(app).post("/api/auth/reset", json={"token": token, "password": "reset-long-password"}).status_code == 200
+    assert stolen.get("/api/auth/me").status_code == 401 and c.get("/api/auth/me").status_code == 401
+    assert TestClient(app).post("/api/auth/login", json={"email": email, "password": "reset-long-password"}).status_code == 200
+
+
+def test_a_session_issued_before_this_feature_without_a_version_claim_still_works_until_the_password_changes():
+    """Existing cookies (no 'pwv' claim) keep working for users who never changed their password."""
+    import jwt
+
+    from app.config import get_settings
+    email = f"old-{u()}@pw.example.org"
+    c = TestClient(app)
+    me = register(c, email, role="candidate")
+    legacy = jwt.encode({"sub": me["id"], "exp": int(time.time()) + 600}, get_settings().secret_key, algorithm="HS256")
+    old = TestClient(app)
+    old.cookies.set("tm_session", legacy)
+    assert old.get("/api/auth/me").status_code == 200
+    assert c.post("/api/auth/password", json={"current_password": PASSWORD, "new_password": "a-very-new-password"}).status_code == 200
+    assert old.get("/api/auth/me").status_code == 401

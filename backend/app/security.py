@@ -24,16 +24,23 @@ def verify_password(password: str, hashed: str) -> bool:
         return False
 
 
-def create_session(user_id: str) -> str:
+def session_version(user) -> int:
+    """Changes whenever the password changes or is reset: every session issued before is then refused."""
+    return int(user.password_changed_at.timestamp() * 1000) if user.password_changed_at else 0
+
+
+def create_session(user) -> str:
     s = get_settings()
     exp = datetime.now(UTC) + timedelta(minutes=s.session_minutes)
-    return jwt.encode({"sub": str(user_id), "exp": exp}, s.secret_key, algorithm="HS256")
+    return jwt.encode({"sub": str(user.id), "pwv": session_version(user), "exp": exp}, s.secret_key, algorithm="HS256")
 
 
-def read_session(token: str) -> str | None:
+def read_session(token: str) -> tuple[str, int] | None:
+    """Return (user id, password version the session was issued under)."""
     try:
-        return jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])["sub"]
-    except jwt.PyJWTError:
+        claims = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])
+        return claims["sub"], int(claims.get("pwv", 0))
+    except (jwt.PyJWTError, KeyError, ValueError):
         return None
 
 

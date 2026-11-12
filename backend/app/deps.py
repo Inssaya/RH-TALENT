@@ -6,16 +6,18 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Membership, Organization, User
-from .security import COOKIE, read_session
+from .security import COOKIE, read_session, session_version
 
 
 def current_user_optional(request: Request, db: Session = Depends(get_db)) -> User | None:
     token = request.cookies.get(COOKIE)
-    uid = read_session(token) if token else None
-    if not uid:
+    session = read_session(token) if token else None
+    if not session:
         return None
-    user = db.get(User, uuid.UUID(uid))
-    return user if user and user.status == "active" else None
+    user = db.get(User, uuid.UUID(session[0]))
+    if not user or user.status != "active" or session[1] != session_version(user):
+        return None  # unknown, suspended, or issued before the last password change or reset
+    return user
 
 
 def totp_required(db: Session, user: User) -> bool:
