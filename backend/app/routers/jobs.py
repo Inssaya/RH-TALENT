@@ -491,11 +491,13 @@ def invite_talent(job_id: str, profile_id: str, request: Request, ctx: OrgContex
     from ..models import CandidateProfile, User
     job = get_job(db, ctx, job_id)
     prof = db.get(CandidateProfile, _uuid(profile_id))
-    if not prof or not prof.visible_to_recruiters or job.status != "published":
+    user = db.get(User, prof.user_id) if prof else None
+    # Same conditions as the suggestion list: opted in AND a confirmed address. We never e-mail an address
+    # whose owner has not proven it is theirs.
+    if not prof or not user or not prof.visible_to_recruiters or user.email_verified_at is None or job.status != "published":
         raise HTTPException(404, "Not found")
     if not hit(f"invite:{job.id}:{prof.id}", 1, 86400 * 30):
         raise HTTPException(409, "Already invited")
-    user = db.get(User, prof.user_id)
     emailer.send(user.email, f"{ctx.org.name} vous invite à postuler / invites you to apply: {job.title}",
                  f"{get_settings().public_url}/jobs/{job.slug}")
     audit.log(db, "talent.invited", actor=ctx.user, resource=f"job:{job.id}", organization_id=ctx.org.id,

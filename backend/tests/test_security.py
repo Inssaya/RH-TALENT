@@ -231,3 +231,24 @@ def test_replacing_the_authenticator_needs_the_current_code_and_stays_pending_un
     assert TestClient(app).post("/api/auth/login", json={**login, "totp": pyotp.TOTP(new).now()}).status_code == 200
     # nothing pending any more: enable without a new setup is refused
     assert c.post("/api/auth/totp/enable", json={"code": pyotp.TOTP(new).now()}).status_code == 400
+
+
+def test_inviting_a_talent_never_emails_an_unverified_address():
+    rec = TestClient(app)
+    register(rec, f"inv-{u()}@tfa.example.org", org="Invite Org")
+    job = published_job(rec)
+    email = f"talent-{u()}@ver.example.org"
+    candidate_with_cv(email)
+    with session_factory()() as db:  # a row flagged visible although the address was never confirmed
+        user = db.scalar(select(User).where(User.email == email))
+        prof = db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user.id))
+        prof.visible_to_recruiters = True
+        pid, uid = str(prof.id), user.id
+        db.commit()
+    sent = lambda: len([m for m in emailer.outbox if m["to"] == email and "invites you to apply" in m["subject"]])  # noqa: E731
+    r = rec.post(f"/api/jobs/{job['id']}/talents/{pid}/invite")
+    assert r.status_code == 404 and sent() == 0
+    with session_factory()() as db:
+        db.get(User, uid).email_verified_at = db.get(User, uid).created_at
+        db.commit()
+    assert rec.post(f"/api/jobs/{job['id']}/talents/{pid}/invite").status_code == 200 and sent() == 1
