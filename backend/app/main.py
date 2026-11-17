@@ -8,7 +8,7 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .db import get_engine
-from .routers import admin, auth, candidate, jobs, public
+from .routers import admin, assistant, auth, candidate, jobs, public
 
 settings = get_settings()
 logging.basicConfig(level=logging.INFO, format='{"t":"%(asctime)s","lvl":"%(levelname)s","log":"%(name)s","msg":"%(message)s"}')
@@ -45,7 +45,7 @@ async def security_and_timing(request: Request, call_next):
     return response
 
 
-for r in (auth.router, jobs.router, public.router, candidate.router, admin.router):
+for r in (auth.router, jobs.router, public.router, candidate.router, admin.router, assistant.router):
     app.include_router(r, prefix="/api")
 
 

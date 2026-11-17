@@ -86,3 +86,40 @@ def complete_json(kind: str, prompt_version: str, system: str, user: str, org_id
             time.sleep(0.5 * 2 ** attempt if s.env != "test" else 0)
     _record(kind, False, False, {}, int((time.monotonic() - started) * 1000), org_id)
     return None
+
+
+# injectable for tests: set to a callable(messages, tools) -> message dict
+_fake_provider = None
+
+
+def complete_with_tools(kind: str, messages: list[dict], tools: list[dict],
+                        org_id=None, max_tokens: int = 2500) -> dict | None:
+    """Chat completion with function-calling tools. Returns the assistant message dict
+    (may contain tool_calls). Returns None when no provider is available."""
+    if _fake_provider is not None:
+        return _fake_provider(messages, tools)
+    s = get_settings()
+    if not s.mistral_api_key:
+        return None
+    started = time.monotonic()
+    for attempt in range(3):
+        try:
+            r = httpx.post(
+                f"{s.mistral_base_url}/chat/completions", timeout=60,
+                headers={"Authorization": f"Bearer {s.mistral_api_key}"},
+                json={"model": s.llm_model, "messages": messages, "temperature": 0,
+                      "max_tokens": max_tokens, "tools": tools, "tool_choice": "auto"},
+            )
+            if r.status_code in (429, 500, 502, 503, 504):
+                raise httpx.HTTPStatusError("retryable", request=r.request, response=r)
+            r.raise_for_status()
+            body = r.json()
+            msg = body["choices"][0]["message"]
+            _record(kind, True, False, body.get("usage", {}),
+                    int((time.monotonic() - started) * 1000), org_id)
+            return msg
+        except Exception as exc:
+            log.warning("llm tool call %s failed (attempt %s): %s", kind, attempt + 1, exc)
+            time.sleep(0.5 * 2 ** attempt if s.env != "test" else 0)
+    _record(kind, False, False, {}, int((time.monotonic() - started) * 1000), org_id)
+    return None
