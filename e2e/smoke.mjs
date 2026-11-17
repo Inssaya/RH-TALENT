@@ -277,5 +277,19 @@ await journey("6. Arabic switches the layout to right-to-left", async () => {
   await p.context().close();
 });
 
+await journey("7. Accessibility: no critical axe-core violations on key pages", async () => {
+  const { AxeBuilder } = require("@axe-core/playwright");
+  const pages = ["/", "/jobs", "/login", "/register", "/track", "/help", "/how-ai-works"];
+  const p = await newPage();
+  for (const path of pages) {
+    await p.goto(path);
+    await p.waitForLoadState("networkidle");
+    const results = await new AxeBuilder({ page: p }).analyze();
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    assert.equal(critical.length, 0, `${path}: ${critical.length} critical violation(s): ${critical.map((v) => v.id).join(", ")}`);
+  }
+  await p.context().close();
+});
+
 await browser.close();
 console.log(`\n${results.filter(([, ok]) => ok).length}/${results.length} journeys passed`);
