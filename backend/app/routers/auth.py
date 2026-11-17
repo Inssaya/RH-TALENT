@@ -221,7 +221,7 @@ def totp_setup(body: TotpIn | None = None, user: User = Depends(current_user), d
         raise HTTPException(403, "The current authentication code is required to replace the authenticator")
     user.totp_pending_secret = pyotp.random_base32()
     return {"secret": user.totp_pending_secret,
-            "uri": pyotp.TOTP(user.totp_pending_secret).provisioning_uri(user.email, issuer_name="TalentMatch")}
+            "uri": pyotp.TOTP(user.totp_pending_secret).provisioning_uri(name=user.email, issuer_name="TalentMatch")}
 
 
 @router.post("/auth/totp/enable")

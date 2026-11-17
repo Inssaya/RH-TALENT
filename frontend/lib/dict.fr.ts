@@ -182,4 +182,12 @@ export const fr: Record<string, string> = {
   "The new password must be different from the current one": "Le nouveau mot de passe doit être différent de l'actuel",
   "I lost my tracking link": "J'ai perdu mon lien de suivi", "If this address has applications, an e-mail with the links has been sent.": "Si cette adresse a des candidatures, un e-mail avec les liens a été envoyé.",
   "Enter the e-mail address you applied with. We only ever send the links to that address.": "Saisissez l'adresse e-mail avec laquelle vous avez postulé. Les liens ne sont jamais envoyés qu'à cette adresse.", "Send me my links": "M'envoyer mes liens",
+  // ---- assistant panel
+  "Close the assistant": "Fermer l'assistant", "Ask a question about your jobs and candidates.": "Posez une question sur vos offres et candidats.",
+  "The assistant is not available right now. You can still use the quick actions below.": "L'assistant n'est pas disponible pour le moment. Vous pouvez utiliser les actions rapides ci-dessous.",
+  "Thinking…": "Réflexion…", "Ask the assistant…": "Posez une question à l'assistant…",
+  "AI decision support. The recruiter always decides.": "Aide à la décision par IA. Le recruteur décide toujours.",
+  "Summarise this job": "Résumer cette offre", "Who should I look at first?": "Qui devrais-je regarder en premier ?",
+  "What is missing most often?": "Qu'est-ce qui manque le plus souvent ?", "Check my job post": "Vérifier mon offre",
+  "I looked up: {items}": "J'ai consulté : {items}", "Confirm": "Confirmer", "Ignore": "Ignorer", "Done": "Fait",
 };

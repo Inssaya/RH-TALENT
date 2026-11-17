@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useApp } from "@/components/Providers";
 import { Spinner, StatusChip, useGuard } from "@/components/ui";
+import Assistant from "@/components/Assistant";
 import { Job } from "@/lib/types";
 
 export default function Recruiter() {
@@ -51,6 +52,7 @@ export default function Recruiter() {
           </table>
         </div>
       )}
+      <Assistant />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api";
 import { useApp } from "@/components/Providers";
 import JobForm, { QualityReport } from "@/components/JobForm";
 import { Alert, Bar, FLAG_LABEL, ScoreBadge, Spinner, StatusChip, STATUS_LABEL, useGuard } from "@/components/ui";
+import Assistant from "@/components/Assistant";
 import { Draft, Job, Row, SUBSCORE_LABEL } from "@/lib/types";
 
 type Shortlist = {
@@ -286,6 +287,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
           </aside>
         </div>
       )}
+      <Assistant jobId={id} />
     </div>
   );
 }
