@@ -114,6 +114,18 @@ Behaviour built in: 3 exponential retries, then **rule-based mode** for extracti
 3. Check what the account did: Audit log, filter on the action prefix (`job.`, `application.`).
 4. Candidate complaints: reply from the administrator mailbox; offer the human review and erasure rights.
 
+## 11. Disabling the recruiter assistant
+
+The assistant chat panel appears on recruiter pages. Without `MISTRAL_API_KEY`, only the quick-action chips
+work (direct tool calls, no LLM). To disable the assistant entirely:
+
+1. Remove `MISTRAL_API_KEY` from `.env` (this also disables LLM scoring; rule-based mode takes over).
+2. `docker compose up -d api worker`.
+3. The chat panel still appears but returns `{"llm": false}` and shows a degraded-mode message. Quick
+   actions (direct database reads) continue to work.
+
+To hide the panel from the UI without a code change, add a feature flag or CSS override in a future release.
+
 ## Routine tasks
 
 | Task | How |

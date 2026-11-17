@@ -50,7 +50,7 @@ never enter the score.
    | Provider | Purpose | Notes |
    |---|---|---|
    | Hosting (e.g. Hetzner) | VM, storage | EU region |
-   | Mistral AI | LLM, OCR | Optional; receives CV text without name and contact details; request no-retention and no-training terms |
+   | Mistral AI | LLM, OCR, recruiter assistant | Optional; receives CV text and assistant queries without candidate names or contact details (aliases used); request no-retention and no-training terms |
    | E-mail (e.g. Brevo) | Transactional e-mail | EU |
    | Backups (e.g. Backblaze B2) | Encrypted off-site backups | EU region |
    | Sentry, Grafana, Langfuse | Monitoring | Only if enabled; EU region |
@@ -79,3 +79,6 @@ Excluded by design: emotion recognition, biometric categorisation, inference of 
   down-ranked, and all candidates stay visible.
 - Publish a model card (intended use, excluded uses, data, metrics with confidence intervals, limits, contact) once a
   human-annotated evaluation exists. Not written yet.
+- The recruiter assistant is decision *support* only: it can read data and propose changes, but cannot reject, hire
+  or change any application status. Candidate PII (name, email, phone) is scrubbed before sending to the LLM provider;
+  candidates are referenced by opaque aliases (cand_xxxx). All assistant interactions are recorded in the audit log.

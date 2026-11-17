@@ -291,5 +291,20 @@ await journey("7. Accessibility: no critical axe-core violations on key pages", 
   await p.context().close();
 });
 
+await journey("8. Recruiter assistant: quick-action chips work without LLM", async () => {
+  await recruiter.goto(state.jobUrl);
+  await waitFor(recruiter, async () => (await recruiter.getByRole("link", { name: "Lina Benali" }).count()) > 0, "job page loaded");
+  const fab = recruiter.getByRole("button", { name: "Assistant" });
+  await fab.waitFor();
+  await fab.click();
+  await recruiter.getByText("Posez une question sur vos offres et candidats.").waitFor();
+  await recruiter.getByRole("button", { name: "Résumer cette offre" }).click();
+  await waitFor(recruiter, async () => {
+    const text = await recruiter.locator('[aria-live="polite"]').innerText();
+    return text.includes("title") || text.includes("Data Scientist") || text.includes("error");
+  }, "quick action result");
+  await recruiter.getByRole("button", { name: "Fermer l'assistant" }).click();
+});
+
 await browser.close();
 console.log(`\n${results.filter(([, ok]) => ok).length}/${results.length} journeys passed`);

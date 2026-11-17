@@ -87,14 +87,16 @@ All settings are environment variables (`backend/app/config.py`, documented in `
 | Antivirus | `CLAMAV_HOST`, `docker compose --profile antivirus up -d` | Without it, uploads are only type-checked (magic bytes), size-limited and stored privately. |
 | File storage | `STORAGE_BACKEND=s3`, `S3_*` | Needs the `s3` extra (included in the image). Default: local volume. |
 | E-mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | **Required in production.** Without `SMTP_HOST` messages are only logged: nobody receives tracking links, verification links or password resets. |
-| Rate limits | built in (`RATE_LIMIT_ENABLED`) | 5 applications/h/IP, 3/day/e-mail, 5 sign-ups/h/IP, 30 chat messages/10 min/user. |
+| Recruiter assistant | `MISTRAL_API_KEY` (same as LLM) | Chat panel on recruiter pages. Without a key, the panel shows quick actions only (direct tool calls, no LLM). About 2-6 provider calls per turn, a few thousand tokens each. |
+| Rate limits | built in (`RATE_LIMIT_ENABLED`) | 5 applications/h/IP, 3/day/e-mail, 5 sign-ups/h/IP, 30 chat messages/10 min/user, 60 quick-action tool calls/10 min/user. |
 | GDPR | `RETENTION_MONTHS`, `ERASURE_DAYS`, `NOTICE_VERSION`, `REJECT_UNDO_MINUTES` | Retention purge runs nightly (beat). |
 | Monitoring | `SENTRY_DSN` | Needs `pip install sentry-sdk`; not in the image yet. Logs are JSON on stdout. |
 
 ## Tests and quality gates
 
-- Backend: 58 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
-  cases, identity-neutrality, injection and hidden-text handling).
+- Backend: 83 tests on a real PostgreSQL + pgvector (flows, organization isolation, GDPR erasure, shortlist edge
+  cases, identity-neutrality, injection and hidden-text handling, assistant tool allow-list, PII scrubbing, prompt
+  injection defence, agent loop cap).
 - `python -m app.cli eval` fails if the ranking does not beat a BM25 baseline by 0.05 nDCG@10 or if the
   counterfactual score gap reaches 0.03. **These numbers come from synthetic data** (see `docs/evaluation.md`).
 - CI (`.github/workflows/ci.yml`): lint, tests, migration check, evaluation, frontend type-check and build,
@@ -110,8 +112,8 @@ Be aware of these before using the platform with real candidates.
 - **No human-annotated evaluation set exists.** Reported quality numbers are synthetic and prove non-regression,
   not real-world accuracy. The annotation tool of the specification is not built (the bench reads the same JSON
   format, so an annotated set can be dropped in).
-- Candidate comparison view, interview guide, screening questions, CV tips, candidate chat assistant and
-  CSV/PDF export (all "Could" in the specification) are not built.
+- Candidate comparison view, interview guide, screening questions, CV tips and CSV/PDF export
+  (all "Could" in the specification) are not built.
 - Voice dictation uses the browser's speech recognition, not server-side transcription.
 - The built-in skill taxonomy has about 135 entries. Import the full ESCO export with `python -m app.cli import-esco`.
 - Arabic UI covers the public, authentication, candidate and tracking screens; recruiter and admin screens fall
