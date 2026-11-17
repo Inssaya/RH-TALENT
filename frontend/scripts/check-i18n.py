@@ -1,10 +1,14 @@
-"""Fail if a key used by t() is missing from the French dictionary, or a dictionary has duplicate keys."""
-import re, glob, sys
-fe=open('lib/dict.fr.ts').read()
-dkeys=re.findall(r'"((?:[^"\\]|\\.)+)"\s*:\s*"',fe)
-dup={k for k in dkeys if dkeys.count(k)>1}
-print("duplicate fr keys:",sorted(dup))
-fr=set(dkeys)
+"""Check i18n coverage. Without flags: fail if a key used by t() is missing from French.
+With --locale ar: warn about Arabic gaps (exit 0, only prints).
+"""
+import argparse, re, glob, sys
+p=argparse.ArgumentParser(); p.add_argument("--locale"); args=p.parse_args()
+def load(path):
+    t=open(path).read()
+    keys=re.findall(r'"((?:[^"\\]|\\.)+)"\s*:\s*"',t)
+    return keys, set(keys)
+fr_keys,fr=load('lib/dict.fr.ts')
+dup={k for k in fr_keys if fr_keys.count(k)>1}
 used=set()
 rx=re.compile(r'\bt\(\s*"((?:[^"\\]|\\.)+)"')
 for f in glob.glob('app/**/*.tsx',recursive=True)+glob.glob('components/*.tsx'):
@@ -20,7 +24,17 @@ for f in ['app/recruiter/jobs/new/page.tsx','app/recruiter/jobs/[id]/page.tsx','
     for m in re.finditer(r'^\s*\["([^"]+)",\s*"([^"]+)"\],$',s,re.M): used.update(m.groups())
     used.update(re.findall(r'\["(?:name|sector|size|city|country|website)", "([^"]+)"\]',s))
 used={u.replace('\\"','"') for u in used}
+if args.locale=="ar":
+    _,ar=load('lib/dict.ar.ts')
+    ar_dup_keys=[k for k in re.findall(r'"((?:[^"\\]|\\.)+)"\s*:\s*"',open('lib/dict.ar.ts').read()) if re.findall(r'"((?:[^"\\]|\\.)+)"\s*:\s*"',open('lib/dict.ar.ts').read()).count(k)>1]
+    ar_dup=set(ar_dup_keys)
+    missing_ar=sorted(u for u in used if u not in ar)
+    print(f"duplicate ar keys: {sorted(ar_dup)}")
+    print(f"{len(used)} keys used; {len(missing_ar)} missing from ar:")
+    print("\n".join(missing_ar))
+    sys.exit(0)
 missing=sorted(u for u in used if u not in fr)
+print("duplicate fr keys:",sorted(dup))
 print(len(used),"keys used;",len(missing),"missing from fr:")
 print("\n".join(missing))
 sys.exit(1 if missing or dup else 0)
