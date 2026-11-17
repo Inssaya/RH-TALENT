@@ -50,6 +50,7 @@ class RegisterIn(BaseModel):
     organization_name: str | None = Field(None, max_length=200)
     locale: Literal["fr", "en", "ar"] = "fr"
     accept_terms: bool
+    turnstile: str | None = None
 
     @field_validator("accept_terms")
     @classmethod

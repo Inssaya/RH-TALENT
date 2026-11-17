@@ -26,6 +26,7 @@ from ..security import (
     verify_password,
 )
 from ..services import record_consent, unique_slug
+from .public import _turnstile
 
 router = APIRouter(tags=["auth"])
 
@@ -48,6 +49,7 @@ def user_out(db: Session, user: User) -> dict:
 
 @router.post("/auth/register", dependencies=[Depends(limiter("register", 5, 3600))])
 def register(body: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    _turnstile(body.turnstile, client_ip(request))
     email = body.email.lower()
     if db.scalar(select(User.id).where(User.email == email)):
         raise HTTPException(409, "An account already exists for this e-mail")

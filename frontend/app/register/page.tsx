@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useApp } from "@/components/Providers";
+import Turnstile, { turnstileEnabled } from "@/components/Turnstile";
 import { Alert } from "@/components/ui";
 
 export default function Register() {
@@ -10,6 +11,8 @@ export default function Register() {
   const [role, setRole] = useState<"candidate" | "recruiter">("candidate");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cfToken, setCfToken] = useState("");
+  const onCfToken = useCallback((t: string) => setCfToken(t), []);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("role") === "recruiter") setRole("recruiter"); }, []);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,7 +22,8 @@ export default function Register() {
     try {
       await api("/auth/register", { method: "POST", json: {
         email: f.email, password: f.password, full_name: f.full_name, role, locale,
-        organization_name: role === "recruiter" ? f.organization_name : null, accept_terms: !!f.accept_terms } });
+        organization_name: role === "recruiter" ? f.organization_name : null, accept_terms: !!f.accept_terms,
+        ...(cfToken ? { turnstile: cfToken } : {}) } });
       await refresh();
       window.location.href = role === "recruiter" ? "/recruiter" : "/candidate";
     } catch (err) { setError(t(String((err as ApiError).detail))); } finally { setBusy(false); }
@@ -44,7 +48,8 @@ export default function Register() {
           <input type="checkbox" name="accept_terms" required className="mt-1" />
           <span>{t("I accept the terms of use and the privacy notice.")} <Link href="/legal/privacy" className="text-brand-700 underline" target="_blank">{t("Privacy and your rights")}</Link></span>
         </label>
-        <button className="btn-primary w-full" disabled={busy}>{t("Create my account")}</button>
+        <Turnstile onToken={onCfToken} />
+        <button className="btn-primary w-full" disabled={busy || (turnstileEnabled() && !cfToken)}>{t("Create my account")}</button>
         <p className="text-sm"><Link href="/login" className="text-brand-700 hover:underline">{t("I already have an account")}</Link></p>
       </form>
     </div>

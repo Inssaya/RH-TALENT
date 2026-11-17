@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useApp } from "./Providers";
+import Turnstile, { turnstileEnabled } from "./Turnstile";
 import { Alert } from "./ui";
 
 export default function ApplyPanel({ slug, open }: { slug: string; open: boolean }) {
@@ -10,6 +11,8 @@ export default function ApplyPanel({ slug, open }: { slug: string; open: boolean
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ token?: string } | null>(null);
+  const [cfToken, setCfToken] = useState("");
+  const onCfToken = useCallback((t: string) => setCfToken(t), []);
 
   if (!open) return <div className="card"><Alert kind="info">{t("This job is closed.")}</Alert></div>;
   if (done) {
@@ -39,6 +42,7 @@ export default function ApplyPanel({ slug, open }: { slug: string; open: boolean
     const fd = new FormData(e.currentTarget);
     fd.set("locale", locale);
     fd.set("consent", fd.get("consent") ? "true" : "false");
+    if (cfToken) fd.set("turnstile", cfToken);
     try {
       const r = await api<{ tracking_token: string }>(`/public/jobs/${slug}/apply`, { method: "POST", body: fd });
       setDone({ token: r.tracking_token });
@@ -79,7 +83,8 @@ export default function ApplyPanel({ slug, open }: { slug: string; open: boolean
           <span>{t("I have read the privacy notice and agree that my application is processed for this job. An AI ranks applications; a human takes every decision.")}{" "}
             <Link href="/legal/privacy" className="text-brand-700 underline" target="_blank">{t("Privacy and your rights")}</Link></span>
         </label>
-        <button className="btn-primary w-full" disabled={busy}>{busy ? "…" : t("Send my application")}</button>
+        <Turnstile onToken={onCfToken} />
+        <button className="btn-primary w-full" disabled={busy || (turnstileEnabled() && !cfToken)}>{busy ? "…" : t("Send my application")}</button>
         <p className="muted">{t("No account needed.")}</p>
       </form>
     </div>
